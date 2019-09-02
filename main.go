@@ -43,6 +43,8 @@ type Input struct {
 	Cue    CueFile
 	Tracks []Track
 
+	TrackNumberFmt string
+
 	Performer string
 	Title     string
 	Genre     string
@@ -133,6 +135,11 @@ func parseInput(path string, fi os.FileInfo) (in Input) {
 				in.Genre = genre
 				in.Date = date
 				in.Tracks = make([]Track, len(files[0].Tracks))
+				if len(in.Tracks) >= 100 {
+					in.TrackNumberFmt = "%03d"
+				} else {
+					in.TrackNumberFmt = "%02d"
+				}
 				for i, ft := range files[0].Tracks {
 					t := &in.Tracks[i]
 					*t = Track{
@@ -184,8 +191,8 @@ func (in *Input) OutputPath() (path string) {
 	return
 }
 
-func (t *Track) OutputPath(ext string) (path string) {
-	path = fmt.Sprintf("%02d", t.Number)
+func (t *Track) OutputPath(in *Input, ext string) (path string) {
+	path = fmt.Sprintf(in.TrackNumberFmt, t.Number)
 	if t.Title != "" {
 		path += " - " + t.Title
 	}
@@ -199,7 +206,7 @@ func (in *Input) Dump() {
 	fmt.Printf("cue: %s\n", in.Cue.Path)
 	out := in.OutputPath()
 	for _, t := range in.Tracks {
-		fmt.Printf("%s/%s\n\tfirst=%d last=%d\n", out, t.OutputPath(".flac"), t.FirstSample, t.LastSample)
+		fmt.Printf("%s/%s\n\tfirst=%d last=%d\n", out, t.OutputPath(in, ".flac"), t.FirstSample, t.LastSample)
 	}
 }
 
