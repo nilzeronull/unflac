@@ -10,15 +10,15 @@ import (
 )
 
 type Input struct {
-	Audio  *AudioFile
-	Tracks []Track
+	Audio  *AudioFile `json:"audio"`
+	Tracks []Track    `json:"tracks,omitempty"`
 
-	TrackNumberFmt string
+	TrackNumberFmt string `json:"-"`
 
-	Performer string
-	Title     string
-	Genre     string
-	Date      string
+	Performer string `json:"performer,omitempty"`
+	Title     string `json:"title,omitempty"`
+	Genre     string `json:"genre,omitempty"`
+	Date      string `json:"date,omitempty"`
 }
 
 func NewInput(path string) (in *Input, err error) {
@@ -114,7 +114,7 @@ func (in *Input) OutputPath() (path string) {
 
 func (in *Input) Dump() {
 	fmt.Printf("%s\n", in.Audio.Path)
-	dirPath := in.OutputPath()
+	dirPath := filepath.Join(*outputDir, in.OutputPath())
 	for _, t := range in.Tracks {
 		trackPath := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
 		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.FirstSample, t.LastSample)

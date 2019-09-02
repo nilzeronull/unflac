@@ -13,9 +13,9 @@ import (
 )
 
 type AudioFile struct {
-	Path       string
-	Ext        string
-	SampleRate int
+	Path       string `json:"path"`
+	Ext        string `json:"ext"`
+	SampleRate int    `json:"sampleRate,omitempty"`
 }
 
 func NewAudioFile(path string) (af *AudioFile, err error) {

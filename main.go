@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -11,6 +12,9 @@ import (
 
 var (
 	outputDir = flag.String("o", ".", "Output directory")
+	quiet     = flag.Bool("q", false, "Only print errors")
+	dryRun    = flag.Bool("d", false, "Dry run")
+	jsonDump  = flag.Bool("j", false, "Dump all inputs as json")
 
 	extensions = []string{
 		".flac",
@@ -72,7 +76,12 @@ func main() {
 		log.Fatal("no input found")
 	}
 	for _, in := range inputs {
-		in.Dump()
-		fmt.Printf("\n")
+		if !*quiet {
+			in.Dump()
+			fmt.Printf("\n")
+		}
+	}
+	if *jsonDump {
+		json.NewEncoder(os.Stdout).Encode(inputs)
 	}
 }

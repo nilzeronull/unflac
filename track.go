@@ -7,14 +7,14 @@ import (
 )
 
 type Track struct {
-	Number      int
-	Performer   string
-	SongWriter  string
-	Title       string
-	Genre       string
-	Date        string
-	FirstSample int
-	LastSample  int
+	Number      int    `json:"number,omitempty"`
+	Performer   string `json:"performer,omitempty"`
+	SongWriter  string `json:"songWriter,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Genre       string `json:"genre,omitempty"`
+	Date        string `json:"date,omitempty"`
+	FirstSample int    `json:"firstSample"`
+	LastSample  int    `json:"lastSample,omitempty"`
 }
 
 func (t *Track) OutputPath(in *Input, ext string) (path string) {
