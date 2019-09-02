@@ -75,12 +75,14 @@ func NewInput(path string) (in *Input, err error) {
 			Genre:      genre,
 			Date:       date,
 		}
-		t.SetIndexes(in.Audio.SampleRate, ft.Indexes)
 		if t.Number == 0 {
 			t.Number = i + 1
 		}
-		if i > 0 && in.Tracks[i-1].LastSample == 0 {
-			in.Tracks[i-1].LastSample = t.FirstSample - 1
+		if err = t.SetIndexes(in.Audio.SampleRate, ft.Indexes); err != nil {
+			break
+		}
+		if i > 0 {
+			in.Tracks[i-1].SetNextIndexes(in.Audio.SampleRate, ft.Indexes)
 		}
 	}
 
