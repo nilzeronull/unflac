@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -108,6 +109,9 @@ func (in *Input) OutputPath() (path string) {
 		album += "Unknown Album" // FIXME this name sucks
 	}
 
+	performer = pathReplaceChars(performer)
+	album = pathReplaceChars(album)
+
 	// FIXME make sure the final path doesn't exist?
 	return filepath.Join(performer, album)
 }
@@ -119,4 +123,20 @@ func (in *Input) Dump() {
 		trackPath := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
 		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.FirstSample, t.LastSample)
 	}
+}
+
+func (in *Input) Split() (err error) {
+	dirPath := filepath.Join(*outputDir, in.OutputPath())
+	if err = os.MkdirAll(dirPath, 0755); err != nil {
+		return
+	}
+
+	for _, t := range in.Tracks {
+		filename := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
+		if err = in.Audio.Extract(&t, filename); err != nil {
+			return
+		}
+	}
+
+	return
 }

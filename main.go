@@ -21,6 +21,10 @@ var (
 	}
 )
 
+func pathReplaceChars(s string) string {
+	return strings.ReplaceAll(s, "/", "∕")
+}
+
 func scanDir(path string) (ins []*Input) {
 	var f *os.File
 	var fis []os.FileInfo
@@ -79,6 +83,9 @@ func main() {
 		if !*quiet {
 			in.Dump()
 			fmt.Printf("\n")
+		}
+		if !*dryRun {
+			in.Split()
 		}
 	}
 	if *jsonDump {

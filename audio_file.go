@@ -34,6 +34,16 @@ func NewAudioFile(path string) (af *AudioFile, err error) {
 	return
 }
 
+func (af *AudioFile) Extract(t *Track, filename string) error {
+	atrim := fmt.Sprintf("atrim=start_sample=%d", t.FirstSample)
+	if t.LastSample != 0 {
+		atrim = fmt.Sprintf("%s:end_sample=%d", atrim, t.LastSample)
+	}
+	cmd := exec.Command("ffmpeg", "-loglevel", "error", "-i", af.Path, "-af", atrim, filename)
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func (af *AudioFile) OpenCueSheet() (r io.ReadCloser, err error) {
 	external := strings.TrimSuffix(af.Path, af.Ext) + ".cue"
 	if r, err = os.Open(external); err == nil {

@@ -22,7 +22,7 @@ func (t *Track) OutputPath(in *Input, ext string) (path string) {
 	if t.Title != "" {
 		path += " - " + t.Title
 	}
-	path += ext
+	path = pathReplaceChars(path + ext)
 	return
 }
 
