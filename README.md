@@ -14,3 +14,18 @@ external dependencies and their quirks.
  * ffmpeg
 
 Yeah, that's it.
+
+## TODO
+
+ * tagging
+ * parallel extraction
+ * an option to format the output path in a specific way
+ * detect cue sheet encoding and convert to utf8
+ * copying cue, log, images over to the destination
+ * clean up on errors
+ * split to other formats (ogg/vorbis, mp3)
+ * support more input formats (wave, wavpack, mac)
+
+## DONE
+
+ * basic splitting
