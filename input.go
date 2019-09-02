@@ -3,19 +3,13 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/vchimishuk/chub/cue"
 )
 
-type CueFile struct {
-	Path string
-}
-
 type Input struct {
-	Audio  AudioFile
-	Cue    CueFile
+	Audio  *AudioFile
 	Tracks []Track
 
 	TrackNumberFmt string
@@ -26,21 +20,14 @@ type Input struct {
 	Date      string
 }
 
-func ParseInput(path string) (in *Input, err error) {
-	in = &Input{
-		Audio: AudioFile{Path: path},
-		Cue:   CueFile{Path: strings.TrimSuffix(path, ".flac") + ".cue"},
-	}
-
-	var sampleRate int
-	if sampleRate, err = in.Audio.SampleRate(); err != nil {
+func NewInput(path string) (in *Input, err error) {
+	in = new(Input)
+	if in.Audio, err = NewAudioFile(path); err != nil {
 		return
 	}
 
-	// try external cue sheet
 	var cueReader io.ReadCloser
-	if cueReader, err = os.Open(in.Cue.Path); err != nil {
-		// FIXME fall back to internal one
+	if cueReader, err = in.Audio.OpenCueSheet(); err != nil {
 		return
 	}
 
@@ -87,7 +74,7 @@ func ParseInput(path string) (in *Input, err error) {
 			Genre:      genre,
 			Date:       date,
 		}
-		t.SetIndexes(sampleRate, ft.Indexes)
+		t.SetIndexes(in.Audio.SampleRate, ft.Indexes)
 		if t.Number == 0 {
 			t.Number = i + 1
 		}
@@ -122,8 +109,7 @@ func (in *Input) OutputPath() (path string) {
 }
 
 func (in *Input) Dump() {
-	fmt.Printf("audio: %s\n", in.Audio.Path)
-	fmt.Printf("cue: %s\n", in.Cue.Path)
+	fmt.Printf("%s\n", in.Audio.Path)
 	out := in.OutputPath()
 	for _, t := range in.Tracks {
 		fmt.Printf("%s/%s\n\tfirst=%d last=%d\n", out, t.OutputPath(in, ".flac"), t.FirstSample, t.LastSample)
