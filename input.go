@@ -141,7 +141,7 @@ func (in *Input) Split() (err error) {
 	}
 
 	for _, t := range in.Tracks {
-		filename := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
+		filename := filepath.Join(dirPath, t.OutputPath(in, "."+*format))
 		if err = in.Audio.Extract(in, &t, filename); err != nil {
 			return
 		}

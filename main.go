@@ -15,6 +15,7 @@ var (
 	quiet     = flag.Bool("q", false, "Only print errors")
 	dryRun    = flag.Bool("d", false, "Dry run")
 	jsonDump  = flag.Bool("j", false, "Dump all inputs as json")
+	format    = flag.String("f", "flac", "Output format")
 
 	extensions = []string{
 		".flac",

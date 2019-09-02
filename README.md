@@ -22,10 +22,10 @@ Yeah, that's it.
  * detect cue sheet encoding and convert to utf8
  * copying cue, log, images over to the destination
  * clean up on errors
- * split to other formats (ogg/vorbis, mp3)
  * support more input formats (wave, wavpack, mac)
 
 ## DONE
 
  * basic splitting
  * tagging
+ * split to other formats (ogg/vorbis, mp3)

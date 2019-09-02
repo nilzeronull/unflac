@@ -34,24 +34,38 @@ func NewAudioFile(path string) (af *AudioFile, err error) {
 	return
 }
 
+type Tag struct {
+	Name  string
+	Value string
+}
+
 func (af *AudioFile) Extract(in *Input, t *Track, filename string) (err error) {
-	args := []string{"-loglevel", "error", "-i", af.Path}
-	groups := []struct {
-		Name  string
-		Value string
-	}{
-		{"ARTIST", t.SongWriter},
-		{"PERFORMER", t.Performer},
-		{"ALBUM", in.Title},
-		{"TITLE", t.Title},
-		{"TRACKNUMBER", strconv.Itoa(t.Number)},
-		{"GENRE", t.Genre},
-		{"DATE", t.Date},
-		{"TRACKTOTAL", strconv.Itoa(len(in.Tracks))},
+	args := []string{"-loglevel", "error", "-i", af.Path, "-write_id3v2", "1", "-id3v2_version", "3"}
+	tags := []Tag{
+		{"artist", t.SongWriter},
+		{"performer", t.Performer},
+		{"album", in.Title},
+		{"title", t.Title},
+		{"genre", t.Genre},
+		{"date", t.Date},
 	}
-	for _, g := range groups {
-		if g.Value != "" {
-			args = append(args, "-metadata", fmt.Sprintf("%s=%s", g.Name, g.Value))
+
+	switch *format {
+	case "flac":
+		tags = append(tags,
+			Tag{"tracknumber", strconv.Itoa(t.Number)},
+			Tag{"tracktotal", strconv.Itoa(len(in.Tracks))},
+		)
+
+	case "mp3":
+		tags = append(tags,
+			Tag{"track", fmt.Sprintf("%d/%d", t.Number, len(in.Tracks))},
+		)
+	}
+
+	for _, t := range tags {
+		if t.Value != "" {
+			args = append(args, "-metadata", fmt.Sprintf("%s=%s", t.Name, t.Value))
 		}
 	}
 
