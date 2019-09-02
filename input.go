@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/vchimishuk/chub/cue"
@@ -95,23 +96,25 @@ func (in *Input) OutputPath() (path string) {
 		performer = "Unknown Artist"
 	}
 	// FIXME remove characters that can't be used in a dir name
-	path = performer + "/"
+	var album string
 	if in.Date != "" {
-		path += in.Date + " - "
+		album = in.Date + " - "
 	}
 	if in.Title != "" {
-		path += in.Title
+		album += in.Title
 	} else {
-		path += "Unknown Album" // FIXME this name sucks
+		album += "Unknown Album" // FIXME this name sucks
 	}
-	// FIXME make sure the final path doesn't exist
-	return
+
+	// FIXME make sure the final path doesn't exist?
+	return filepath.Join(performer, album)
 }
 
 func (in *Input) Dump() {
 	fmt.Printf("%s\n", in.Audio.Path)
-	out := in.OutputPath()
+	dirPath := in.OutputPath()
 	for _, t := range in.Tracks {
-		fmt.Printf("%s/%s\n\tfirst=%d last=%d\n", out, t.OutputPath(in, ".flac"), t.FirstSample, t.LastSample)
+		trackPath := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
+		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.FirstSample, t.LastSample)
 	}
 }

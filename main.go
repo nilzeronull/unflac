@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 var (
 	outputDir = flag.String("o", ".", "Output directory")
+
+	extensions = []string{
+		".flac",
+	}
 )
 
 func scanDir(path string) (ins []*Input) {
@@ -20,20 +25,26 @@ func scanDir(path string) (ins []*Input) {
 	if f, err = os.Open(path); err == nil {
 		if fis, err = f.Readdir(0); err == nil {
 			for _, fi := range fis {
-				fiPath := path + "/" + fi.Name()
+				fiPath := filepath.Join(path, fi.Name())
 				if fi.IsDir() {
 					ins = append(ins, scanDir(fiPath)...)
-				} else if strings.HasSuffix(fi.Name(), ".flac") {
-					var in *Input
-					if in, err = NewInput(fiPath); err != nil {
-						break
+				} else {
+					for _, ext := range extensions {
+						if strings.HasSuffix(fi.Name(), ext) {
+							var in *Input
+							if in, err = NewInput(fiPath); err != nil {
+								log.Printf("%s: %s", fiPath, err)
+								err = nil
+							} else {
+								ins = append(ins, in)
+							}
+							break
+						}
 					}
-					ins = append(ins, in)
 				}
 			}
 		}
 	}
-
 	if err != nil {
 		log.Fatalf("%s: %s", path, err)
 	}
