@@ -16,10 +16,11 @@ type Input struct {
 
 	TrackNumberFmt string `json:"-"`
 
-	Performer string `json:"performer,omitempty"`
-	Title     string `json:"title,omitempty"`
-	Genre     string `json:"genre,omitempty"`
-	Date      string `json:"date,omitempty"`
+	Performer  string `json:"performer,omitempty"`
+	SongWriter string `json:"songWriter,omitempty"`
+	Title      string `json:"title,omitempty"`
+	Genre      string `json:"genre,omitempty"`
+	Date       string `json:"date,omitempty"`
 }
 
 func NewInput(path string) (in *Input, err error) {
@@ -45,6 +46,7 @@ func NewInput(path string) (in *Input, err error) {
 	}
 
 	in.Performer = sheet.Performer
+	in.SongWriter = sheet.Songwriter
 	in.Title = sheet.Title
 
 	var date, genre string
@@ -75,6 +77,13 @@ func NewInput(path string) (in *Input, err error) {
 			SongWriter: ft.Songwriter,
 			Genre:      genre,
 			Date:       date,
+		}
+		if t.SongWriter == "" {
+			if in.SongWriter == "" {
+				t.SongWriter = t.Performer
+			} else {
+				t.SongWriter = in.SongWriter
+			}
 		}
 		if t.Number == 0 {
 			t.Number = i + 1
@@ -133,7 +142,7 @@ func (in *Input) Split() (err error) {
 
 	for _, t := range in.Tracks {
 		filename := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
-		if err = in.Audio.Extract(&t, filename); err != nil {
+		if err = in.Audio.Extract(in, &t, filename); err != nil {
 			return
 		}
 	}

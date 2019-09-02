@@ -17,7 +17,6 @@ Yeah, that's it.
 
 ## TODO
 
- * tagging
  * parallel extraction
  * an option to format the output path in a specific way
  * detect cue sheet encoding and convert to utf8
@@ -29,3 +28,4 @@ Yeah, that's it.
 ## DONE
 
  * basic splitting
+ * tagging
