@@ -28,14 +28,25 @@ type CueFile struct {
 }
 
 type Track struct {
-	Performer string
-	Title     string
+	Number      int
+	Performer   string
+	SongWriter  string
+	Title       string
+	Genre       string
+	Date        string
+	FirstSample int
+	LastSample  int
 }
 
 type Input struct {
 	Audio  AudioFile
 	Cue    CueFile
 	Tracks []Track
+
+	Performer string
+	Title     string
+	Genre     string
+	Date      string
 }
 
 func scanDir(path string) (ins []Input) {
@@ -117,13 +128,30 @@ func parseInput(path string, fi os.FileInfo) (in Input) {
 						genre = words[1]
 					}
 				}
-				log.Printf("%s - %s", in.Cue.Sheet.Performer, in.Cue.Sheet.Title)
-				log.Printf("date: %s", date)
-				log.Printf("genre: %s", genre)
-				for _, t := range files[0].Tracks {
-					log.Printf("%02d - %s [start_sample=%d]", t.Number, t.Title, timeToSamples(sampleRate, t.Indexes[0].Time))
+				in.Performer = in.Cue.Sheet.Performer
+				in.Title = in.Cue.Sheet.Title
+				in.Genre = genre
+				in.Date = date
+				in.Tracks = make([]Track, len(files[0].Tracks))
+				for i, ft := range files[0].Tracks {
+					t := &in.Tracks[i]
+					*t = Track{
+						Number:      ft.Number,
+						Title:       ft.Title,
+						Performer:   ft.Performer,
+						SongWriter:  ft.Songwriter,
+						Genre:       genre,
+						Date:        date,
+						FirstSample: timeToSamples(sampleRate, ft.Indexes[0].Time),
+					}
+					if t.Number == 0 {
+						t.Number = i + 1
+					}
+					if i > 0 {
+						in.Tracks[i-1].LastSample = t.FirstSample - 1
+					}
 				}
-				log.Printf("total samples: %d", totalSamples)
+				in.Tracks[len(in.Tracks)-1].LastSample = totalSamples - 1
 			}
 		}
 	}
@@ -132,6 +160,47 @@ func parseInput(path string, fi os.FileInfo) (in Input) {
 		log.Fatalf("%s: %s", path, err)
 	}
 	return
+}
+
+func (in *Input) OutputPath() (path string) {
+	performer := in.Performer
+	if performer == "" {
+		// FIXME go through tracks and see if there is one or several
+		// that can be used to construct proper performer string here
+		// might end up being "Various Artists" too?
+		performer = "Unknown Artist"
+	}
+	// FIXME remove characters that can't be used in a dir name
+	path = performer + "/"
+	if in.Date != "" {
+		path += in.Date + " - "
+	}
+	if in.Title != "" {
+		path += in.Title
+	} else {
+		path += "Unknown Album" // FIXME this name sucks
+	}
+	// FIXME make sure the final path doesn't exist
+	return
+}
+
+func (t *Track) OutputPath(ext string) (path string) {
+	path = fmt.Sprintf("%02d", t.Number)
+	if t.Title != "" {
+		path += " - " + t.Title
+	}
+	path += ext
+	return
+}
+
+func (in *Input) Dump() {
+	fmt.Printf("audio: %s\n", in.Audio.Path)
+	fmt.Printf("size: %d bytes\n", in.Audio.Size)
+	fmt.Printf("cue: %s\n", in.Cue.Path)
+	out := in.OutputPath()
+	for _, t := range in.Tracks {
+		fmt.Printf("%s/%s\n\tfirst=%d last=%d\n", out, t.OutputPath(".flac"), t.FirstSample, t.LastSample)
+	}
 }
 
 func main() {
@@ -146,5 +215,12 @@ func main() {
 		} else {
 			inputs = append(inputs, parseInput(path, fi))
 		}
+	}
+	if len(inputs) == 0 {
+		log.Fatal("no input found")
+	}
+	for _, in := range inputs {
+		in.Dump()
+		fmt.Printf("\n")
 	}
 }
