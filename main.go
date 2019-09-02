@@ -25,7 +25,7 @@ func scanDir(path string) (ins []*Input) {
 					ins = append(ins, scanDir(fiPath)...)
 				} else if strings.HasSuffix(fi.Name(), ".flac") {
 					var in *Input
-					if in, err = ParseInput(fiPath, fi); err != nil {
+					if in, err = ParseInput(fiPath); err != nil {
 						break
 					}
 					ins = append(ins, in)
@@ -51,7 +51,7 @@ func main() {
 			inputs = append(inputs, scanDir(path)...)
 		} else {
 			var in *Input
-			if in, err = ParseInput(path, fi); err != nil {
+			if in, err = ParseInput(path); err != nil {
 				log.Fatalf("%s: %s", path, err)
 			}
 			inputs = append(inputs, in)

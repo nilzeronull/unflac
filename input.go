@@ -4,17 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/vchimishuk/chub/cue"
 )
-
-type AudioFile struct {
-	Path string
-	Size int64
-}
 
 type CueFile struct {
 	Path string
@@ -33,29 +26,15 @@ type Input struct {
 	Date      string
 }
 
-func ParseInput(path string, fi os.FileInfo) (in *Input, err error) {
+func ParseInput(path string) (in *Input, err error) {
 	in = &Input{
-		Audio: AudioFile{Path: path, Size: fi.Size()},
+		Audio: AudioFile{Path: path},
 		Cue:   CueFile{Path: strings.TrimSuffix(path, ".flac") + ".cue"},
 	}
 
-	var out strings.Builder
-	cmd := exec.Command("metaflac", "--list", path)
-	cmd.Stdout = &out
-	if err = cmd.Run(); err != nil {
-		return
-	}
-
 	var sampleRate int
-	lines := strings.Split(out.String(), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(line, "  sample_rate: ") {
-			words := strings.Fields(line)
-			if sampleRate, err = strconv.Atoi(words[len(words)-2]); err != nil {
-				return
-			}
-			break
-		}
+	if sampleRate, err = in.Audio.SampleRate(); err != nil {
+		return
 	}
 
 	// try external cue sheet
@@ -144,7 +123,6 @@ func (in *Input) OutputPath() (path string) {
 
 func (in *Input) Dump() {
 	fmt.Printf("audio: %s\n", in.Audio.Path)
-	fmt.Printf("size: %d bytes\n", in.Audio.Size)
 	fmt.Printf("cue: %s\n", in.Cue.Path)
 	out := in.OutputPath()
 	for _, t := range in.Tracks {
