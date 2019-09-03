@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
+
+	"github.com/gammazero/workerpool"
 )
 
 var (
@@ -80,15 +82,22 @@ func main() {
 	if len(inputs) == 0 {
 		log.Fatal("no input found")
 	}
+
+	wp := workerpool.New(runtime.NumCPU())
+	firstErr := make(chan error)
+	go func() {
+		log.Fatalf("%s", <-firstErr)
+	}()
+
 	for _, in := range inputs {
-		if !*quiet {
-			in.Dump()
-			fmt.Printf("\n")
-		}
 		if !*dryRun {
-			in.Split()
+			if err := in.Split(wp, firstErr); err != nil {
+				log.Fatalf("%s: %s", in.Audio.Path, err)
+			}
 		}
 	}
+	wp.StopWait()
+
 	if *jsonDump {
 		json.NewEncoder(os.Stdout).Encode(inputs)
 	}

@@ -2,8 +2,6 @@
 
 A command line tool for frame accurate FLAC image + cue sheet splitting.
 
-WIP.
-
 This project is started mostly out of frustration over supporting
 [split2flac](https://github.com/ftrvxmtrx/split2flac) with all the
 external dependencies and their quirks.
@@ -17,7 +15,7 @@ Yeah, that's it.
 
 ## TODO
 
- * parallel extraction
+ * get the artist/performer/composer right (and support multiple)
  * an option to format the output path in a specific way
  * detect cue sheet encoding and convert to utf8
  * copying cue, log, images over to the destination
@@ -29,6 +27,7 @@ Yeah, that's it.
  * basic splitting
  * tagging
  * split to other formats (ogg/vorbis, mp3)
+ * parallel extraction
 
 ## NOTES
 

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gammazero/workerpool"
 	"github.com/vchimishuk/chub/cue"
 )
 
@@ -145,17 +146,23 @@ func (in *Input) Dump() {
 	}
 }
 
-func (in *Input) Split() (err error) {
+func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err error) {
 	dirPath := filepath.Join(*outputDir, in.OutputPath())
 	if err = os.MkdirAll(dirPath, 0755); err != nil {
 		return
 	}
 
 	for _, t := range in.Tracks {
-		trackPath := filepath.Join(dirPath, in.TrackFilename(t))
-		if err = in.Audio.Extract(t, trackPath); err != nil {
-			return
-		}
+		pool.Submit(func(t *Track) func() {
+			return func() {
+				trackPath := filepath.Join(dirPath, in.TrackFilename(t))
+				if err = in.Audio.Extract(t, trackPath); err != nil {
+					firstErr <- fmt.Errorf("%s: %s", trackPath, err)
+				} else if !*quiet {
+					fmt.Printf("%s\n", trackPath)
+				}
+			}
+		}(t))
 	}
 
 	return
