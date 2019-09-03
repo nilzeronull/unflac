@@ -12,7 +12,7 @@ You need [Go](https://golang.org/) installed.
 
 ```
 go get github.com/ftrvxmtrx/unflac
-unflac -h
+~/go/bin/unflac -h
 ```
 
 ## Dependencies
