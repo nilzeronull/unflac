@@ -65,6 +65,8 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 		args = append(args, "-write_id3v2", "1", "-id3v2_version", "3", "-qscale:a", "3")
 	}
 
+	args = append(args, ffmpegArgs...)
+
 	for _, t := range tags {
 		if t.Value != "" {
 			args = append(args, "-metadata", fmt.Sprintf("%s=%s", t.Name, t.Value))

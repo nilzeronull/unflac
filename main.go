@@ -12,6 +12,8 @@ import (
 	"github.com/gammazero/workerpool"
 )
 
+type ListFlag []string
+
 var (
 	outputDir = flag.String("o", ".", "Output directory")
 	quiet     = flag.Bool("q", false, "Only print errors")
@@ -19,50 +21,15 @@ var (
 	jsonDump  = flag.Bool("j", false, "Dump all inputs as json")
 	format    = flag.String("f", "flac", "Output format")
 
+	ffmpegArgs ListFlag
+
 	extensions = []string{
 		".flac",
 	}
 )
 
-func pathReplaceChars(s string) string {
-	return strings.ReplaceAll(s, "/", "∕")
-}
-
-func scanDir(path string) (ins []*Input) {
-	var f *os.File
-	var fis []os.FileInfo
-	var err error
-
-	if f, err = os.Open(path); err == nil {
-		if fis, err = f.Readdir(0); err == nil {
-			for _, fi := range fis {
-				fiPath := filepath.Join(path, fi.Name())
-				if fi.IsDir() {
-					ins = append(ins, scanDir(fiPath)...)
-				} else {
-					for _, ext := range extensions {
-						if strings.HasSuffix(fi.Name(), ext) {
-							var in *Input
-							if in, err = NewInput(fiPath); err != nil {
-								log.Printf("%s: %s", fiPath, err)
-								err = nil
-							} else {
-								ins = append(ins, in)
-							}
-							break
-						}
-					}
-				}
-			}
-		}
-	}
-	if err != nil {
-		log.Fatalf("%s: %s", path, err)
-	}
-	return
-}
-
 func main() {
+	flag.Var(&ffmpegArgs, "arg-ffmpeg", "Add an argument to ffmpeg")
 	flag.Parse()
 
 	var inputs []*Input
@@ -101,4 +68,51 @@ func main() {
 	if *jsonDump {
 		json.NewEncoder(os.Stdout).Encode(inputs)
 	}
+}
+
+func (l *ListFlag) String() string {
+	return strings.Join(*l, " ")
+}
+
+func (l *ListFlag) Set(s string) error {
+	*l = append(*l, s)
+	return nil
+}
+
+func pathReplaceChars(s string) string {
+	return strings.ReplaceAll(s, "/", "∕")
+}
+
+func scanDir(path string) (ins []*Input) {
+	var f *os.File
+	var fis []os.FileInfo
+	var err error
+
+	if f, err = os.Open(path); err == nil {
+		if fis, err = f.Readdir(0); err == nil {
+			for _, fi := range fis {
+				fiPath := filepath.Join(path, fi.Name())
+				if fi.IsDir() {
+					ins = append(ins, scanDir(fiPath)...)
+				} else {
+					for _, ext := range extensions {
+						if strings.HasSuffix(fi.Name(), ext) {
+							var in *Input
+							if in, err = NewInput(fiPath); err != nil {
+								log.Printf("%s: %s", fiPath, err)
+								err = nil
+							} else {
+								ins = append(ins, in)
+							}
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	if err != nil {
+		log.Fatalf("%s: %s", path, err)
+	}
+	return
 }
