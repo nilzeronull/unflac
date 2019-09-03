@@ -12,7 +12,7 @@ import (
 
 type Input struct {
 	Audio  *AudioFile `json:"audio"`
-	Tracks []Track    `json:"tracks,omitempty"`
+	Tracks []*Track   `json:"tracks,omitempty"`
 
 	TrackNumberFmt string `json:"-"`
 
@@ -62,22 +62,24 @@ func NewInput(path string) (in *Input, err error) {
 	in.Genre = genre
 	in.Date = date
 
-	in.Tracks = make([]Track, len(sheet.Files[0].Tracks))
+	in.Tracks = make([]*Track, len(sheet.Files[0].Tracks))
 	if len(in.Tracks) >= 100 {
 		in.TrackNumberFmt = "%03d"
 	} else {
 		in.TrackNumberFmt = "%02d"
 	}
 	for i, ft := range sheet.Files[0].Tracks {
-		t := &in.Tracks[i]
-		*t = Track{
-			Number:     ft.Number,
-			Title:      ft.Title,
-			Performer:  ft.Performer,
-			SongWriter: ft.Songwriter,
-			Genre:      genre,
-			Date:       date,
+		t := Track{
+			Number:      ft.Number,
+			TotalTracks: len(in.Tracks),
+			Title:       ft.Title,
+			Performer:   ft.Performer,
+			SongWriter:  ft.Songwriter,
+			Album:       in.Title,
+			Genre:       genre,
+			Date:        date,
 		}
+		in.Tracks[i] = &t
 		if t.SongWriter == "" {
 			if in.SongWriter == "" {
 				t.SongWriter = t.Performer
@@ -125,12 +127,21 @@ func (in *Input) OutputPath() (path string) {
 	return filepath.Join(performer, album)
 }
 
+func (in *Input) TrackFilename(t *Track) (path string) {
+	path = fmt.Sprintf(in.TrackNumberFmt, t.Number)
+	if t.Title != "" {
+		path += " - " + t.Title
+	}
+	path = pathReplaceChars(path + "." + *format)
+	return
+}
+
 func (in *Input) Dump() {
 	fmt.Printf("%s\n", in.Audio.Path)
 	dirPath := filepath.Join(*outputDir, in.OutputPath())
 	for _, t := range in.Tracks {
-		trackPath := filepath.Join(dirPath, t.OutputPath(in, ".flac"))
-		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.FirstSample, t.LastSample)
+		trackPath := filepath.Join(dirPath, in.TrackFilename(t))
+		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.StartAtSample, t.EndAtSample)
 	}
 }
 
@@ -141,8 +152,8 @@ func (in *Input) Split() (err error) {
 	}
 
 	for _, t := range in.Tracks {
-		filename := filepath.Join(dirPath, t.OutputPath(in, "."+*format))
-		if err = in.Audio.Extract(in, &t, filename); err != nil {
+		trackPath := filepath.Join(dirPath, in.TrackFilename(t))
+		if err = in.Audio.Extract(t, trackPath); err != nil {
 			return
 		}
 	}

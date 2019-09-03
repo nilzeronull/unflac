@@ -29,3 +29,7 @@ Yeah, that's it.
  * basic splitting
  * tagging
  * split to other formats (ogg/vorbis, mp3)
+
+## NOTES
+
+ * using id3 v2.3 tags because it seems basically no software reads id3 v2.4

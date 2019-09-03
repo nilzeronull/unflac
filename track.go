@@ -7,23 +7,16 @@ import (
 )
 
 type Track struct {
-	Number      int    `json:"number,omitempty"`
-	Performer   string `json:"performer,omitempty"`
-	SongWriter  string `json:"songWriter,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Genre       string `json:"genre,omitempty"`
-	Date        string `json:"date,omitempty"`
-	FirstSample int    `json:"firstSample"`
-	LastSample  int    `json:"lastSample,omitempty"`
-}
-
-func (t *Track) OutputPath(in *Input, ext string) (path string) {
-	path = fmt.Sprintf(in.TrackNumberFmt, t.Number)
-	if t.Title != "" {
-		path += " - " + t.Title
-	}
-	path = pathReplaceChars(path + ext)
-	return
+	Number        int    `json:"number,omitempty"`
+	TotalTracks   int    `json:"totalTracks"`
+	Performer     string `json:"performer,omitempty"`
+	SongWriter    string `json:"songWriter,omitempty"`
+	Album         string `json:"album,omitempty"`
+	Title         string `json:"title,omitempty"`
+	Genre         string `json:"genre,omitempty"`
+	Date          string `json:"date,omitempty"`
+	StartAtSample int    `json:"firstSample"`
+	EndAtSample   int    `json:"lastSample,omitempty"`
 }
 
 func indexTimeToSample(sampleRate int, t *cue.Time) int {
@@ -34,7 +27,7 @@ func (t *Track) SetIndexes(sampleRate int, indexes []*cue.Index) error {
 	// INDEX 01 defines the beginning of this track
 	for _, i := range indexes {
 		if i.Number == 1 {
-			t.FirstSample = indexTimeToSample(sampleRate, i.Time)
+			t.StartAtSample = indexTimeToSample(sampleRate, i.Time)
 			return nil
 		}
 	}
@@ -47,10 +40,10 @@ func (t *Track) SetNextIndexes(sampleRate int, indexes []*cue.Index) {
 	// no INDEX 00 found? the end is the beginning of the next track
 	for _, i := range indexes {
 		if i.Number == 0 {
-			t.LastSample = indexTimeToSample(sampleRate, i.Time) - 1
+			t.EndAtSample = indexTimeToSample(sampleRate, i.Time)
 			return
-		} else if i.Number == 1 && t.LastSample == 0 {
-			t.LastSample = indexTimeToSample(sampleRate, i.Time) - 1
+		} else if i.Number == 1 && t.EndAtSample == 0 {
+			t.EndAtSample = indexTimeToSample(sampleRate, i.Time)
 		}
 	}
 }

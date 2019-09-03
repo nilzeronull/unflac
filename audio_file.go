@@ -18,6 +18,11 @@ type AudioFile struct {
 	SampleRate int    `json:"sampleRate,omitempty"`
 }
 
+type Tag struct {
+	Name  string
+	Value string
+}
+
 func NewAudioFile(path string) (af *AudioFile, err error) {
 	af = &AudioFile{Path: path, Ext: filepath.Ext(path)}
 
@@ -34,17 +39,13 @@ func NewAudioFile(path string) (af *AudioFile, err error) {
 	return
 }
 
-type Tag struct {
-	Name  string
-	Value string
-}
-
-func (af *AudioFile) Extract(in *Input, t *Track, filename string) (err error) {
+func (af *AudioFile) Extract(t *Track, filename string) (err error) {
+	// ffmpeg options
 	args := []string{"-loglevel", "error", "-i", af.Path, "-write_id3v2", "1", "-id3v2_version", "3"}
 	tags := []Tag{
 		{"artist", t.SongWriter},
 		{"performer", t.Performer},
-		{"album", in.Title},
+		{"album", t.Album},
 		{"title", t.Title},
 		{"genre", t.Genre},
 		{"date", t.Date},
@@ -54,12 +55,12 @@ func (af *AudioFile) Extract(in *Input, t *Track, filename string) (err error) {
 	case "flac":
 		tags = append(tags,
 			Tag{"tracknumber", strconv.Itoa(t.Number)},
-			Tag{"tracktotal", strconv.Itoa(len(in.Tracks))},
+			Tag{"tracktotal", strconv.Itoa(t.TotalTracks)},
 		)
 
 	case "mp3":
 		tags = append(tags,
-			Tag{"track", fmt.Sprintf("%d/%d", t.Number, len(in.Tracks))},
+			Tag{"track", fmt.Sprintf("%d/%d", t.Number, t.TotalTracks)},
 		)
 		args = append(args, "-qscale:a", "3")
 	}
@@ -70,9 +71,9 @@ func (af *AudioFile) Extract(in *Input, t *Track, filename string) (err error) {
 		}
 	}
 
-	atrim := fmt.Sprintf("atrim=start_sample=%d", t.FirstSample)
-	if t.LastSample != 0 {
-		atrim = fmt.Sprintf("%s:end_sample=%d", atrim, t.LastSample)
+	atrim := fmt.Sprintf("atrim=start_sample=%d", t.StartAtSample)
+	if t.EndAtSample != 0 {
+		atrim = fmt.Sprintf("%s:end_sample=%d", atrim, t.EndAtSample)
 	}
 	args = append(args, "-af", atrim, filename)
 
