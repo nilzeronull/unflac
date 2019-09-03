@@ -61,6 +61,7 @@ func (af *AudioFile) Extract(in *Input, t *Track, filename string) (err error) {
 		tags = append(tags,
 			Tag{"track", fmt.Sprintf("%d/%d", t.Number, len(in.Tracks))},
 		)
+		args = append(args, "-qscale:a", "3")
 	}
 
 	for _, t := range tags {
