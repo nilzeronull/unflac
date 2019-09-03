@@ -1,10 +1,19 @@
 # unflac
 
-A command line tool for frame accurate FLAC image + cue sheet splitting.
+A command line tool for fast frame accurate FLAC image + cue sheet splitting.
 
 This project is started mostly out of frustration over supporting
 [split2flac](https://github.com/ftrvxmtrx/split2flac) with all the
 external dependencies and their quirks.
+
+## Installation and running
+
+You need [Go](https://golang.org/) installed.
+
+```
+go get github.com/ftrvxmtrx/unflac
+unflac -h
+```
 
 ## Dependencies
 
@@ -20,6 +29,7 @@ Yeah, that's it.
  * detect cue sheet encoding and convert to utf8
  * copying cue, log, images over to the destination
  * clean up on errors
+ * replay gain
  * support more input formats (wave, wavpack, mac)
 
 ## DONE
