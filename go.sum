@@ -1,6 +1,6 @@
+github.com/ftrvxmtrx/chub v0.0.0-20190904194331-362eb8ddc61c h1:nMKJMPX/1/7Ta6Lobb0zyzLl7G+ZO0VOesRemrgEuRM=
+github.com/ftrvxmtrx/chub v0.0.0-20190904194331-362eb8ddc61c/go.mod h1:M/aj9MdnxftfbN4VvT2BxO0YNeVRsa2vCMELq6lD6pw=
 github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622 h1:lxbhOGZ9pU3Kf8P6lFluUcE82yVZn2EqEf4+mWRNPV0=
 github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622/go.mod h1:D90+MBHVc9Sk1lJAbEVgws0eYEurY4mv2TDso3Nxh3w=
 github.com/gammazero/workerpool v0.0.0-20190608213748-0ed5e40ec55e h1:fqgNEGLc7p2Rz4xlDHp9WNw/pqqR3c2cLdIC4zASBzU=
 github.com/gammazero/workerpool v0.0.0-20190608213748-0ed5e40ec55e/go.mod h1:avlwxCMavNtjwf7NrfnzdIGU3OZYI5D1NFQ2Rn3nHKg=
-github.com/vchimishuk/chub v0.0.0-20190501162134-36f1f5f7c9ef h1:Aew4jNB16cG2gnlY1dGOW6Od/x0r3puwfpbwX7aO6r0=
-github.com/vchimishuk/chub v0.0.0-20190501162134-36f1f5f7c9ef/go.mod h1:28Qi8YBLQu3Fb3xKnGR9ou2d/PfFz3ptpbZdtsCM++4=

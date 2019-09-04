@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/vchimishuk/chub/cue"
+	"github.com/ftrvxmtrx/chub/cue"
 )
 
 type Track struct {

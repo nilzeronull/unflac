@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ftrvxmtrx/chub/cue"
 	"github.com/gammazero/workerpool"
-	"github.com/vchimishuk/chub/cue"
 )
 
 type Input struct {
@@ -50,18 +50,18 @@ func NewInput(path string) (in *Input, err error) {
 	in.SongWriter = sheet.Songwriter
 	in.Title = sheet.Title
 
-	var date, genre string
 	for _, c := range sheet.Comments {
 		if strings.HasPrefix(c, "DATE") {
 			words := strings.Fields(c)
-			date = words[len(words)-1]
+			in.Date = words[len(words)-1]
 		} else if strings.HasPrefix(c, "GENRE") {
 			words := strings.SplitAfterN(c, " ", 2)
-			genre = words[1]
+			in.Genre = words[1]
+		} else if strings.HasPrefix(c, "COMPOSER") {
+			words := strings.SplitAfterN(c, " ", 2)
+			in.SongWriter = words[1]
 		}
 	}
-	in.Genre = genre
-	in.Date = date
 
 	var prevAudioTrack *Track
 	in.Tracks = make([]*Track, 0)
@@ -70,7 +70,7 @@ func NewInput(path string) (in *Input, err error) {
 			prevAudioTrack.SetNextIndexes(in.Audio.SampleRate, ft.Indexes)
 			prevAudioTrack = nil
 		}
-		if ft.DataType != 0 {
+		if ft.DataType != cue.DataTypeAudio {
 			continue
 		}
 
@@ -81,15 +81,22 @@ func NewInput(path string) (in *Input, err error) {
 			Performer:   ft.Performer,
 			SongWriter:  ft.Songwriter,
 			Album:       in.Title,
-			Genre:       genre,
-			Date:        date,
+			Genre:       in.Genre,
+			Date:        in.Date,
 		}
+		for _, c := range ft.Comments {
+			if strings.HasPrefix(c, "COMPOSER") {
+				words := strings.SplitAfterN(c, " ", 2)
+				t.SongWriter = words[1]
+			}
+		}
+
 		in.Tracks = append(in.Tracks, t)
 		if t.SongWriter == "" {
-			if in.SongWriter == "" {
-				t.SongWriter = t.Performer
-			} else {
+			if in.SongWriter != "" {
 				t.SongWriter = in.SongWriter
+			} else {
+				t.SongWriter = t.Performer
 			}
 		}
 		if t.Number == 0 {
