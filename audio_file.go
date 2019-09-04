@@ -14,7 +14,7 @@ import (
 
 type AudioFile struct {
 	Path       string `json:"path"`
-	Ext        string `json:"ext"`
+	Format     string `json:"format"`
 	SampleRate int    `json:"sampleRate,omitempty"`
 }
 
@@ -24,16 +24,18 @@ type Tag struct {
 }
 
 func NewAudioFile(path string) (af *AudioFile, err error) {
-	af = &AudioFile{Path: path, Ext: filepath.Ext(path)}
+	af = &AudioFile{Path: path, Format: strings.ToLower(filepath.Ext(path)[1:])}
 
-	switch af.Ext {
-	case ".flac":
+	switch af.Format {
+	case "flac":
 		var out strings.Builder
 		cmd := exec.Command("metaflac", "--show-sample-rate", af.Path)
 		cmd.Stdout = &out
 		if err = cmd.Run(); err == nil {
 			af.SampleRate, err = strconv.Atoi(strings.TrimSpace(out.String()))
 		}
+	default:
+		err = fmt.Errorf("don't know how to handle %s", af.Format)
 	}
 
 	return
@@ -91,14 +93,14 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 }
 
 func (af *AudioFile) OpenCueSheet() (r io.ReadCloser, err error) {
-	external := strings.TrimSuffix(af.Path, af.Ext) + ".cue"
+	external := strings.TrimSuffix(af.Path, filepath.Ext(af.Path)) + ".cue"
 	if r, err = os.Open(external); err == nil {
 		return
 	}
 
 	// fall back to internal one
-	switch af.Ext {
-	case ".flac":
+	switch af.Format {
+	case "flac":
 		out := new(bytes.Buffer)
 		cmd := exec.Command("metaflac", "--export-cuesheet-to=-", af.Path)
 		cmd.Stdout = out
@@ -108,7 +110,7 @@ func (af *AudioFile) OpenCueSheet() (r io.ReadCloser, err error) {
 			err = fmt.Errorf("no CUE sheet found")
 		}
 	default:
-		err = fmt.Errorf("internal CUE sheet reading not implemented for %q files", af.Ext)
+		err = fmt.Errorf("internal CUE sheet reading not implemented for %s files", af.Format)
 	}
 
 	return

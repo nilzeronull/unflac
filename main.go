@@ -96,7 +96,7 @@ func scanDir(path string) (ins []*Input) {
 					ins = append(ins, scanDir(fiPath)...)
 				} else {
 					for _, ext := range extensions {
-						if strings.HasSuffix(fi.Name(), ext) {
+						if strings.HasSuffix(strings.ToLower(fi.Name()), ext) {
 							var in *Input
 							if in, err = NewInput(fiPath); err != nil {
 								log.Printf("%s: %s", fiPath, err)
