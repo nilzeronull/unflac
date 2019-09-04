@@ -41,7 +41,7 @@ func NewAudioFile(path string) (af *AudioFile, err error) {
 
 func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 	// ffmpeg options
-	args := []string{"-loglevel", "error", "-i", af.Path}
+	args := []string{"-loglevel", "error", "-y", "-i", af.Path}
 	tags := []Tag{
 		{"artist", t.SongWriter},
 		{"performer", t.Performer},
@@ -56,6 +56,11 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 		tags = append(tags,
 			Tag{"tracknumber", strconv.Itoa(t.Number)},
 			Tag{"tracktotal", strconv.Itoa(t.TotalTracks)},
+		)
+
+	case "ogg":
+		tags = append(tags,
+			Tag{"tracknumber", strconv.Itoa(t.Number)},
 		)
 
 	case "mp3":

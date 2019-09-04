@@ -63,14 +63,18 @@ func NewInput(path string) (in *Input, err error) {
 	in.Genre = genre
 	in.Date = date
 
-	in.Tracks = make([]*Track, len(sheet.Files[0].Tracks))
-	if len(in.Tracks) >= 100 {
-		in.TrackNumberFmt = "%03d"
-	} else {
-		in.TrackNumberFmt = "%02d"
-	}
-	for i, ft := range sheet.Files[0].Tracks {
-		t := Track{
+	var prevAudioTrack *Track
+	in.Tracks = make([]*Track, 0)
+	for _, ft := range sheet.Files[0].Tracks {
+		if prevAudioTrack != nil && prevAudioTrack.EndAtSample == 0 {
+			prevAudioTrack.SetNextIndexes(in.Audio.SampleRate, ft.Indexes)
+			prevAudioTrack = nil
+		}
+		if ft.DataType != 0 {
+			continue
+		}
+
+		t := &Track{
 			Number:      ft.Number,
 			TotalTracks: len(in.Tracks),
 			Title:       ft.Title,
@@ -80,7 +84,7 @@ func NewInput(path string) (in *Input, err error) {
 			Genre:       genre,
 			Date:        date,
 		}
-		in.Tracks[i] = &t
+		in.Tracks = append(in.Tracks, t)
 		if t.SongWriter == "" {
 			if in.SongWriter == "" {
 				t.SongWriter = t.Performer
@@ -89,14 +93,17 @@ func NewInput(path string) (in *Input, err error) {
 			}
 		}
 		if t.Number == 0 {
-			t.Number = i + 1
+			t.Number = len(in.Tracks)
 		}
 		if err = t.SetIndexes(in.Audio.SampleRate, ft.Indexes); err != nil {
-			break
+			return
 		}
-		if i > 0 {
-			in.Tracks[i-1].SetNextIndexes(in.Audio.SampleRate, ft.Indexes)
-		}
+		prevAudioTrack = t
+	}
+	if len(in.Tracks) > 99 {
+		in.TrackNumberFmt = "%03d"
+	} else {
+		in.TrackNumberFmt = "%02d"
 	}
 
 	return
