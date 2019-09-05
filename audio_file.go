@@ -104,18 +104,21 @@ func (af *AudioFile) OpenCueSheet() (r io.ReadCloser, err error) {
 	}
 
 	// fall back to internal one
+	out := new(bytes.Buffer)
+	var cmd *exec.Cmd
 	switch af.Format {
 	case "flac":
-		out := new(bytes.Buffer)
-		cmd := exec.Command("metaflac", "--export-cuesheet-to=-", af.Path)
-		cmd.Stdout = out
-		if err = cmd.Run(); err == nil {
-			r = ioutil.NopCloser(out)
-		} else {
-			err = fmt.Errorf("no CUE sheet found")
-		}
+		cmd = exec.Command("metaflac", "--export-cuesheet-to=-", af.Path)
+	case "wv":
+		cmd = exec.Command("wvunpack", "-c", af.Path)
 	default:
-		err = fmt.Errorf("internal CUE sheet reading not implemented for %s files", af.Format)
+		return nil, fmt.Errorf("internal CUE sheet reading not implemented for %s files", af.Format)
+	}
+	cmd.Stdout = out
+	if err = cmd.Run(); err == nil {
+		r = ioutil.NopCloser(out)
+	} else {
+		err = fmt.Errorf("no CUE sheet found")
 	}
 
 	return
