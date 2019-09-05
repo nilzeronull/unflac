@@ -45,6 +45,7 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 	// ffmpeg options
 	args := []string{"-loglevel", "error", "-y", "-i", af.Path}
 	tags := []Tag{
+		{"composer", t.Composer},
 		{"artist", t.SongWriter},
 		{"performer", t.Performer},
 		{"album", t.Album},

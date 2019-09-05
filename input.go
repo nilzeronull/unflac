@@ -17,6 +17,7 @@ type Input struct {
 
 	TrackNumberFmt string `json:"-"`
 
+	Composer   string `json:"composer,omitempty"`
 	Performer  string `json:"performer,omitempty"`
 	SongWriter string `json:"songWriter,omitempty"`
 	Title      string `json:"title,omitempty"`
@@ -59,7 +60,7 @@ func NewInput(path string) (in *Input, err error) {
 			in.Genre = words[1]
 		} else if strings.HasPrefix(c, "COMPOSER") {
 			words := strings.SplitAfterN(c, " ", 2)
-			in.SongWriter = words[1]
+			in.Composer = words[1]
 		}
 	}
 
@@ -86,18 +87,11 @@ func NewInput(path string) (in *Input, err error) {
 		for _, c := range ft.Comments {
 			if strings.HasPrefix(c, "COMPOSER") {
 				words := strings.SplitAfterN(c, " ", 2)
-				t.SongWriter = words[1]
+				t.Composer = words[1]
 			}
 		}
 
 		in.Tracks = append(in.Tracks, t)
-		if t.SongWriter == "" {
-			if in.SongWriter != "" {
-				t.SongWriter = in.SongWriter
-			} else {
-				t.SongWriter = t.Performer
-			}
-		}
 		if t.Number == 0 {
 			t.Number = len(in.Tracks)
 		}
@@ -118,15 +112,25 @@ func NewInput(path string) (in *Input, err error) {
 	return
 }
 
-func (in *Input) OutputPath() (path string) {
-	performer := in.Performer
-	if performer == "" {
-		// FIXME go through tracks and see if there is one or several
-		// that can be used to construct proper performer string here
-		// might end up being "Various Artists" too?
-		performer = "Unknown Artist"
+func (in *Input) Artist() string {
+	if in.Composer != "" {
+		return in.Composer
+	} else if in.SongWriter != "" {
+		return in.SongWriter
+	} else if in.Performer != "" {
+		return in.Performer
 	}
-	// FIXME remove characters that can't be used in a dir name
+
+	for _, t := range in.Tracks[1:] {
+		if t.Artist() != in.Tracks[0].Artist() {
+			return "Various Artists"
+		}
+	}
+
+	return "Unknown Artist"
+}
+
+func (in *Input) OutputPath() (path string) {
 	var album string
 	if in.Date != "" {
 		album = in.Date + " - "
@@ -137,11 +141,8 @@ func (in *Input) OutputPath() (path string) {
 		album += "Unknown Album" // FIXME this name sucks
 	}
 
-	performer = pathReplaceChars(performer)
-	album = pathReplaceChars(album)
-
 	// FIXME make sure the final path doesn't exist?
-	return filepath.Join(performer, album)
+	return filepath.Join(pathReplaceChars(in.Artist()), pathReplaceChars(album))
 }
 
 func (in *Input) TrackFilename(t *Track) (path string) {

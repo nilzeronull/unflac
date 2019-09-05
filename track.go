@@ -9,6 +9,7 @@ import (
 type Track struct {
 	Number        int    `json:"number,omitempty"`
 	TotalTracks   int    `json:"totalTracks"`
+	Composer      string `json:"composer,omitempty"`
 	Performer     string `json:"performer,omitempty"`
 	SongWriter    string `json:"songWriter,omitempty"`
 	Album         string `json:"album,omitempty"`
@@ -21,6 +22,17 @@ type Track struct {
 
 func indexTimeToSample(sampleRate int, t *cue.Time) int {
 	return (t.Min*60+t.Sec)*sampleRate + sampleRate/75*t.Frames
+}
+
+func (t *Track) Artist() string {
+	if t.Composer != "" {
+		return t.Composer
+	} else if t.SongWriter != "" {
+		return t.SongWriter
+	} else if t.Performer != "" {
+		return t.Performer
+	}
+	return "Unknown Artist"
 }
 
 func (t *Track) SetIndexes(sampleRate int, indexes []*cue.Index) error {
