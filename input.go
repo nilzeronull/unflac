@@ -75,14 +75,13 @@ func NewInput(path string) (in *Input, err error) {
 		}
 
 		t := &Track{
-			Number:      ft.Number,
-			TotalTracks: len(in.Tracks),
-			Title:       ft.Title,
-			Performer:   ft.Performer,
-			SongWriter:  ft.Songwriter,
-			Album:       in.Title,
-			Genre:       in.Genre,
-			Date:        in.Date,
+			Number:     ft.Number,
+			Title:      ft.Title,
+			Performer:  ft.Performer,
+			SongWriter: ft.Songwriter,
+			Album:      in.Title,
+			Genre:      in.Genre,
+			Date:       in.Date,
 		}
 		for _, c := range ft.Comments {
 			if strings.HasPrefix(c, "COMPOSER") {
@@ -111,6 +110,9 @@ func NewInput(path string) (in *Input, err error) {
 		in.TrackNumberFmt = "%03d"
 	} else {
 		in.TrackNumberFmt = "%02d"
+	}
+	for _, t := range in.Tracks {
+		t.TotalTracks = len(in.Tracks)
 	}
 
 	return
