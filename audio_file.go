@@ -26,16 +26,20 @@ type Tag struct {
 func NewAudioFile(path string) (af *AudioFile, err error) {
 	af = &AudioFile{Path: path, Format: strings.ToLower(filepath.Ext(path)[1:])}
 
+	var cmd *exec.Cmd
 	switch af.Format {
 	case "flac":
-		var out strings.Builder
-		cmd := exec.Command("metaflac", "--show-sample-rate", af.Path)
-		cmd.Stdout = &out
-		if err = cmd.Run(); err == nil {
-			af.SampleRate, err = strconv.Atoi(strings.TrimSpace(out.String()))
-		}
+		cmd = exec.Command("metaflac", "--show-sample-rate", af.Path)
+	case "wv":
+		cmd = exec.Command("wvunpack", "-f1", af.Path)
 	default:
-		err = fmt.Errorf("don't know how to handle %s", af.Format)
+		return nil, fmt.Errorf("don't know how to handle %s", af.Format)
+	}
+
+	var out strings.Builder
+	cmd.Stdout = &out
+	if err = cmd.Run(); err == nil {
+		af.SampleRate, err = strconv.Atoi(strings.TrimSpace(out.String()))
 	}
 
 	return

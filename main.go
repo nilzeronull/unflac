@@ -25,6 +25,7 @@ var (
 
 	extensions = []string{
 		".flac",
+		".wv",
 	}
 )
 

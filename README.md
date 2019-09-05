@@ -17,20 +17,21 @@ go get github.com/ftrvxmtrx/unflac
 
 ## Dependencies
 
- * metaflac
  * ffmpeg
+ * metaflac (to split a FLAC image)
+ * wavpack (to split a WavPack image)
 
 Yeah, that's it.
 
 ## TODO
 
- * get the artist/performer/composer right (and support multiple)
  * an option to format the output path in a specific way
  * detect cue sheet encoding and convert to utf8
  * copying cue, log, images over to the destination
  * clean up on errors
  * replay gain
- * support more input formats (wave, wavpack, mac)
+ * support more input formats (wave, mac)
+ * support multiple artist/performer/composer?
 
 ## DONE
 
@@ -38,6 +39,8 @@ Yeah, that's it.
  * tagging
  * split to other formats (ogg/vorbis, mp3)
  * parallel extraction
+ * support more input formats (wavpack)
+ * get the artist/performer/composer right
 
 ## NOTES
 
