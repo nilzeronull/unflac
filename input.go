@@ -12,39 +12,47 @@ import (
 )
 
 type Input struct {
-	Audio  *AudioFile `json:"audio"`
-	Tracks []*Track   `json:"tracks,omitempty"`
+	Path  string       `json:"path"`
+	Audio []*AudioFile `json:"audio"`
 
 	TrackNumberFmt string `json:"-"`
 
-	Composer   string `json:"composer,omitempty"`
-	Performer  string `json:"performer,omitempty"`
-	SongWriter string `json:"songWriter,omitempty"`
-	Title      string `json:"title,omitempty"`
-	Genre      string `json:"genre,omitempty"`
-	Date       string `json:"date,omitempty"`
+	Composer    string `json:"composer,omitempty"`
+	Performer   string `json:"performer,omitempty"`
+	SongWriter  string `json:"songWriter,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Genre       string `json:"genre,omitempty"`
+	Date        string `json:"date,omitempty"`
+	TotalTracks int    `json:"totalTracks,omitempty"`
+	TotalDisks  int    `json:"totalDisks,omitempty"`
 }
 
 func NewInput(path string) (in *Input, err error) {
-	in = new(Input)
-	if in.Audio, err = NewAudioFile(path); err != nil {
-		return
-	}
-
+	in = &Input{Path: path}
 	var cueReader io.ReadCloser
-	if cueReader, err = in.Audio.OpenCueSheet(); err != nil {
-		return
-	}
-
 	var sheet *cue.Sheet
-	if sheet, err = cue.Parse(cueReader); err != nil {
+	var filesFromCue []*cue.File
+
+	if cueReader, err = os.Open(path); err != nil {
+		return
+	} else if sheet, err = cue.Parse(cueReader); err != nil {
 		return
 	}
-
-	if len(sheet.Files) != 1 {
-		return nil, fmt.Errorf("unsupported number of files: %d", len(sheet.Files))
-	} else if sheet.Files[0].Type != cue.FileTypeWave {
-		return nil, fmt.Errorf("unsupported file type %d", sheet.Files[0].Type)
+	dirPath := filepath.Dir(path)
+	var audio *AudioFile
+	for _, f := range sheet.Files {
+		if f.Type != cue.FileTypeWave {
+			continue
+		} else if audio, err = NewAudio(filepath.Join(dirPath, f.Name)); err != nil {
+			err = fmt.Errorf("%s: %s", f.Name, err)
+			return
+		}
+		in.TotalDisks++
+		in.Audio = append(in.Audio, audio)
+		filesFromCue = append(filesFromCue, f)
+	}
+	if len(in.Audio) < 1 {
+		return nil, fmt.Errorf("no audio files")
 	}
 
 	in.Performer = sheet.Performer
@@ -64,49 +72,55 @@ func NewInput(path string) (in *Input, err error) {
 		}
 	}
 
-	var prevAudioTrack *Track
-	in.Tracks = make([]*Track, 0)
-	for _, ft := range sheet.Files[0].Tracks {
-		if prevAudioTrack != nil && prevAudioTrack.EndAtSample == 0 {
-			prevAudioTrack.SetNextIndexes(in.Audio.SampleRate, ft.Indexes)
-			prevAudioTrack = nil
-		}
-		if ft.DataType != cue.DataTypeAudio {
-			continue
-		}
+	for i, file := range filesFromCue {
+		audio = in.Audio[i]
 
-		t := &Track{
-			Number:     ft.Number,
-			Title:      ft.Title,
-			Performer:  ft.Performer,
-			SongWriter: ft.Songwriter,
-			Album:      in.Title,
-			Genre:      in.Genre,
-			Date:       in.Date,
-		}
-		for _, c := range ft.Comments {
-			if strings.HasPrefix(c, "COMPOSER") {
-				words := strings.SplitAfterN(c, " ", 2)
-				t.Composer = words[1]
+		var prevAudioTrack *Track
+		audio.Tracks = make([]*Track, 0)
+		for _, ft := range file.Tracks {
+			if prevAudioTrack != nil && prevAudioTrack.EndAtSample == 0 {
+				prevAudioTrack.SetNextIndexes(audio.SampleRate, ft.Indexes)
+				prevAudioTrack = nil
 			}
-		}
+			if ft.DataType != cue.DataTypeAudio {
+				continue
+			}
 
-		in.Tracks = append(in.Tracks, t)
-		if t.Number == 0 {
-			t.Number = len(in.Tracks)
+			t := &Track{
+				Number:      ft.Number,
+				Title:       ft.Title,
+				Performer:   ft.Performer,
+				SongWriter:  ft.Songwriter,
+				Album:       in.Title,
+				Genre:       in.Genre,
+				Date:        in.Date,
+				TotalTracks: &in.TotalTracks,
+				TotalDisks:  &in.TotalDisks,
+				DiskNumber:  i + 1,
+			}
+			for _, c := range ft.Comments {
+				if strings.HasPrefix(c, "COMPOSER") {
+					words := strings.SplitAfterN(c, " ", 2)
+					t.Composer = words[1]
+				}
+			}
+
+			audio.Tracks = append(audio.Tracks, t)
+			in.TotalTracks++
+			if t.Number == 0 {
+				t.Number = len(audio.Tracks)
+			}
+			if err = t.SetIndexes(audio.SampleRate, ft.Indexes); err != nil {
+				return
+			}
+			prevAudioTrack = t
 		}
-		if err = t.SetIndexes(in.Audio.SampleRate, ft.Indexes); err != nil {
-			return
-		}
-		prevAudioTrack = t
 	}
-	if len(in.Tracks) > 99 {
+
+	if in.TotalTracks > 99 {
 		in.TrackNumberFmt = "%03d"
 	} else {
 		in.TrackNumberFmt = "%02d"
-	}
-	for _, t := range in.Tracks {
-		t.TotalTracks = len(in.Tracks)
 	}
 
 	return
@@ -121,9 +135,14 @@ func (in *Input) Artist() string {
 		return in.Performer
 	}
 
-	for _, t := range in.Tracks[1:] {
-		if t.Artist() != in.Tracks[0].Artist() {
-			return "Various Artists"
+	var artist string
+	for _, a := range in.Audio {
+		for _, t := range a.Tracks[1:] {
+			if t.Artist() != artist && artist != "" {
+				return "Various Artists"
+			} else {
+				artist = t.Artist()
+			}
 		}
 	}
 
@@ -155,11 +174,13 @@ func (in *Input) TrackFilename(t *Track) (path string) {
 }
 
 func (in *Input) Dump() {
-	fmt.Printf("%s\n", in.Audio.Path)
-	dirPath := filepath.Join(*outputDir, in.OutputPath())
-	for _, t := range in.Tracks {
-		trackPath := filepath.Join(dirPath, in.TrackFilename(t))
-		fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.StartAtSample, t.EndAtSample)
+	for _, a := range in.Audio {
+		fmt.Printf("%s\n", a.Path)
+		dirPath := filepath.Join(*outputDir, in.OutputPath())
+		for _, t := range a.Tracks {
+			trackPath := filepath.Join(dirPath, in.TrackFilename(t))
+			fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.StartAtSample, t.EndAtSample)
+		}
 	}
 }
 
@@ -169,17 +190,19 @@ func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err 
 		return
 	}
 
-	for _, t := range in.Tracks {
-		pool.Submit(func(t *Track) func() {
-			return func() {
-				trackPath := filepath.Join(dirPath, in.TrackFilename(t))
-				if err = in.Audio.Extract(t, trackPath); err != nil {
-					firstErr <- fmt.Errorf("%s: %s", trackPath, err)
-				} else if !*quiet {
-					fmt.Printf("%s\n", trackPath)
+	for _, a := range in.Audio {
+		for _, t := range a.Tracks {
+			pool.Submit(func(t *Track) func() {
+				return func() {
+					trackPath := filepath.Join(dirPath, in.TrackFilename(t))
+					if err = a.Extract(t, trackPath); err != nil {
+						firstErr <- fmt.Errorf("%s: %s", trackPath, err)
+					} else if !*quiet {
+						fmt.Printf("%s\n", trackPath)
+					}
 				}
-			}
-		}(t))
+			}(t))
+		}
 	}
 
 	return

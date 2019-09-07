@@ -22,12 +22,12 @@ var (
 	format    = flag.String("f", "flac", "Output format")
 
 	ffmpegArgs ListFlag
-
-	extensions = []string{
-		".flac",
-		".wv",
-	}
 )
+
+type FailedPath struct {
+	Path  string
+	Error error
+}
 
 func main() {
 	flag.Var(&ffmpegArgs, "arg-ffmpeg", "Add an argument to ffmpeg")
@@ -60,7 +60,7 @@ func main() {
 	for _, in := range inputs {
 		if !*dryRun {
 			if err := in.Split(wp, firstErr); err != nil {
-				log.Fatalf("%s: %s", in.Audio.Path, err)
+				log.Fatalf("%s: %s", in.Path, err)
 			}
 		}
 	}
@@ -80,10 +80,6 @@ func (l *ListFlag) Set(s string) error {
 	return nil
 }
 
-func pathReplaceChars(s string) string {
-	return strings.ReplaceAll(s, "/", "∕")
-}
-
 func scanDir(path string) (ins []*Input) {
 	var f *os.File
 	var fis []os.FileInfo
@@ -95,25 +91,23 @@ func scanDir(path string) (ins []*Input) {
 				fiPath := filepath.Join(path, fi.Name())
 				if fi.IsDir() {
 					ins = append(ins, scanDir(fiPath)...)
-				} else {
-					for _, ext := range extensions {
-						if strings.HasSuffix(strings.ToLower(fi.Name()), ext) {
-							var in *Input
-							if in, err = NewInput(fiPath); err != nil {
-								log.Printf("%s: %s", fiPath, err)
-								err = nil
-							} else {
-								ins = append(ins, in)
-							}
-							break
-						}
+				} else if strings.HasSuffix(strings.ToLower(fi.Name()), ".cue") {
+					var in *Input
+					if in, err = NewInput(fiPath); err != nil {
+						log.Fatalf("%s: %s", fiPath, err)
 					}
+					ins = append(ins, in)
 				}
 			}
 		}
 	}
+
 	if err != nil {
 		log.Fatalf("%s: %s", path, err)
 	}
 	return
+}
+
+func pathReplaceChars(s string) string {
+	return strings.ReplaceAll(s, "/", "∕")
 }

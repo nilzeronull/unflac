@@ -1,10 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,9 +10,10 @@ import (
 )
 
 type AudioFile struct {
-	Path       string `json:"path"`
-	Format     string `json:"format"`
-	SampleRate int    `json:"sampleRate,omitempty"`
+	Path       string   `json:"path"`
+	Format     string   `json:"format"`
+	SampleRate int      `json:"sampleRate,omitempty"`
+	Tracks     []*Track `json:"tracks,omitempty"`
 }
 
 type Tag struct {
@@ -23,7 +21,7 @@ type Tag struct {
 	Value string
 }
 
-func NewAudioFile(path string) (af *AudioFile, err error) {
+func NewAudio(path string) (af *AudioFile, err error) {
 	af = &AudioFile{Path: path, Format: strings.ToLower(filepath.Ext(path)[1:])}
 
 	var cmd *exec.Cmd
@@ -38,8 +36,11 @@ func NewAudioFile(path string) (af *AudioFile, err error) {
 
 	var out strings.Builder
 	cmd.Stdout = &out
+	cmd.Stderr = os.Stderr
 	if err = cmd.Run(); err == nil {
 		af.SampleRate, err = strconv.Atoi(strings.TrimSpace(out.String()))
+	} else {
+		err = fmt.Errorf("failed to get sample rate")
 	}
 
 	return
@@ -62,7 +63,7 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 	case "flac":
 		tags = append(tags,
 			Tag{"tracknumber", strconv.Itoa(t.Number)},
-			Tag{"tracktotal", strconv.Itoa(t.TotalTracks)},
+			Tag{"tracktotal", strconv.Itoa(*t.TotalTracks)},
 		)
 
 	case "ogg":
@@ -95,31 +96,4 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
-}
-
-func (af *AudioFile) OpenCueSheet() (r io.ReadCloser, err error) {
-	external := strings.TrimSuffix(af.Path, filepath.Ext(af.Path)) + ".cue"
-	if r, err = os.Open(external); err == nil {
-		return
-	}
-
-	// fall back to internal one
-	out := new(bytes.Buffer)
-	var cmd *exec.Cmd
-	switch af.Format {
-	case "flac":
-		cmd = exec.Command("metaflac", "--export-cuesheet-to=-", af.Path)
-	case "wv":
-		cmd = exec.Command("wvunpack", "-c", af.Path)
-	default:
-		return nil, fmt.Errorf("internal CUE sheet reading not implemented for %s files", af.Format)
-	}
-	cmd.Stdout = out
-	if err = cmd.Run(); err == nil {
-		r = ioutil.NopCloser(out)
-	} else {
-		err = fmt.Errorf("no CUE sheet found")
-	}
-
-	return
 }
