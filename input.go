@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/ftrvxmtrx/chub/cue"
@@ -73,7 +74,6 @@ func NewInput(path string) (in *Input, err error) {
 			err = fmt.Errorf("%s: %s", f.Name, err)
 			return
 		}
-		in.TotalDisks++
 		in.Audio = append(in.Audio, audio)
 		filesFromCue = append(filesFromCue, f)
 	}
@@ -85,16 +85,26 @@ func NewInput(path string) (in *Input, err error) {
 	in.SongWriter = sheet.Songwriter
 	in.Title = sheet.Title
 
+	var diskNumber int
 	for _, c := range sheet.Comments {
-		if strings.HasPrefix(c, "DATE") {
-			words := strings.Fields(c)
-			in.Date = words[len(words)-1]
+		if words := strings.SplitAfterN(c, " ", 2); len(words) < 2 {
+			continue
+		} else if strings.HasPrefix(c, "DATE") {
+			in.Date = words[1]
 		} else if strings.HasPrefix(c, "GENRE") {
-			words := strings.SplitAfterN(c, " ", 2)
 			in.Genre = words[1]
 		} else if strings.HasPrefix(c, "COMPOSER") {
-			words := strings.SplitAfterN(c, " ", 2)
 			in.Composer = words[1]
+		} else if len(in.Audio) == 1 {
+			// FIXME no idea what to do with several discnumber comments in a cue sheet
+			if strings.HasPrefix(c, "DISCNUMBER") {
+				diskNumber, err = strconv.Atoi(words[1])
+			} else if strings.HasPrefix(c, "TOTALDISCS") {
+				in.TotalDisks, err = strconv.Atoi(words[1])
+			}
+		}
+		if err != nil {
+			return
 		}
 	}
 
@@ -121,8 +131,8 @@ func NewInput(path string) (in *Input, err error) {
 				Genre:       in.Genre,
 				Date:        in.Date,
 				TotalTracks: &in.TotalTracks,
-				TotalDisks:  &in.TotalDisks,
-				DiskNumber:  i + 1,
+				TotalDisks:  in.TotalDisks,
+				DiskNumber:  diskNumber,
 			}
 			for _, c := range ft.Comments {
 				if strings.HasPrefix(c, "COMPOSER") {

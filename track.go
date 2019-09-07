@@ -8,9 +8,9 @@ import (
 
 type Track struct {
 	Number        int    `json:"number,omitempty"`
-	DiskNumber    int    `json:"diskNumber"`
+	DiskNumber    int    `json:"diskNumber,omitempty"`
 	TotalTracks   *int   `json:"totalTracks"`
-	TotalDisks    *int   `json:"totalDisks"`
+	TotalDisks    int    `json:"totalDisks,omitempty"`
 	Composer      string `json:"composer,omitempty"`
 	Performer     string `json:"performer,omitempty"`
 	SongWriter    string `json:"songWriter,omitempty"`
