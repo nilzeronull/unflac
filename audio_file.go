@@ -57,22 +57,38 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 		{"date", t.Date},
 	}
 
+	var diskNumber string
+	if t.DiskNumber != 0 {
+		diskNumber = strconv.Itoa(t.DiskNumber)
+	}
+	var totalDisks string
+	if t.TotalDisks != 0 {
+		totalDisks = strconv.Itoa(t.TotalDisks)
+	}
+
 	switch *format {
 	case "flac":
 		tags = append(tags,
 			Tag{"tracknumber", strconv.Itoa(t.Number)},
 			Tag{"tracktotal", strconv.Itoa(*t.TotalTracks)},
+			Tag{"discnumber", diskNumber},
+			Tag{"totaldiscs", totalDisks},
 		)
 
 	case "ogg":
 		tags = append(tags,
 			Tag{"tracknumber", strconv.Itoa(t.Number)},
+			Tag{"discnumber", diskNumber},
+			Tag{"totaldiscs", totalDisks},
 		)
 
 	case "mp3":
 		tags = append(tags,
 			Tag{"track", fmt.Sprintf("%d/%d", t.Number, t.TotalTracks)},
 		)
+		if diskNumber != "" && totalDisks != "" {
+			tags = append(tags, Tag{"disc", fmt.Sprintf("%s/%s", diskNumber, totalDisks)})
+		}
 		args = append(args, "-write_id3v2", "1", "-id3v2_version", "3", "-qscale:a", "3")
 	}
 
