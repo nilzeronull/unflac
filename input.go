@@ -33,7 +33,7 @@ func NewInput(path string) (in *Input, err error) {
 	var sheet *cue.Sheet
 	var filesFromCue []*cue.File
 
-	if cueReader, err = os.Open(path); err != nil {
+	if cueReader, err = openFileUTF8(path); err != nil {
 		return
 	} else if sheet, err = cue.Parse(cueReader, 0); err != nil {
 		return

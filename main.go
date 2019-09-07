@@ -107,7 +107,3 @@ func scanDir(path string) (ins []*Input) {
 	}
 	return
 }
-
-func pathReplaceChars(s string) string {
-	return strings.ReplaceAll(s, "/", "∕")
-}

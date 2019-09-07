@@ -26,7 +26,6 @@ Yeah, that's it.
 ## TODO
 
  * an option to format the output path in a specific way
- * detect cue sheet encoding and convert to utf8
  * copying cue, log, images over to the destination
  * clean up on errors
  * replay gain
@@ -42,6 +41,7 @@ Yeah, that's it.
  * support more input formats (wavpack)
  * get the artist/performer/composer right
  * multi-disk cue sheets support
+ * detect cue sheet encoding and convert to utf8
 
 ## NOTES
 
