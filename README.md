@@ -41,6 +41,7 @@ Yeah, that's it.
  * parallel extraction
  * support more input formats (wavpack)
  * get the artist/performer/composer right
+ * multi-disk cue sheets support
 
 ## NOTES
 
