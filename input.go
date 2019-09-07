@@ -35,7 +35,7 @@ func NewInput(path string) (in *Input, err error) {
 
 	if cueReader, err = os.Open(path); err != nil {
 		return
-	} else if sheet, err = cue.Parse(cueReader); err != nil {
+	} else if sheet, err = cue.Parse(cueReader, 0); err != nil {
 		return
 	}
 	dirPath := filepath.Dir(path)
