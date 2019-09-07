@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/ftrvxmtrx/chub/cue"
 	"github.com/gammazero/workerpool"
+	"golang.org/x/text/encoding"
 )
 
 type Input struct {
@@ -35,9 +37,33 @@ func NewInput(path string) (in *Input, err error) {
 
 	if cueReader, err = openFileUTF8(path); err != nil {
 		return
-	} else if sheet, err = cue.Parse(cueReader, 0); err != nil {
-		return
 	}
+	cueRaw := new(bytes.Buffer)
+	cueRaw.ReadFrom(cueReader)
+
+	if sheet, err = cue.Parse(bytes.NewBuffer(cueRaw.Bytes()), 0); err != nil {
+		return
+	} else {
+		buf := new(bytes.Buffer)
+		buf.WriteString(sheet.Performer)
+		buf.WriteString(sheet.Songwriter)
+		buf.WriteString(sheet.Title)
+		for _, f := range sheet.Files {
+			if f.Type == cue.FileTypeWave {
+				for _, t := range f.Tracks {
+					buf.WriteString(t.Title)
+				}
+				buf.WriteString(f.Name)
+			}
+		}
+		var dec *encoding.Decoder
+		if dec, err = decoderToUTF8For(buf.Bytes()); err == nil {
+			if sheet, err = cue.Parse(dec.Reader(cueRaw), 0); err != nil {
+				return
+			}
+		}
+	}
+
 	dirPath := filepath.Dir(path)
 	var audio *AudioFile
 	for _, f := range sheet.Files {

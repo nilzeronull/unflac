@@ -12,6 +12,23 @@ import (
 	"golang.org/x/text/encoding/ianaindex"
 )
 
+func decoderToUTF8For(b []byte) (dec *encoding.Decoder, err error) {
+	var best *chardet.Result
+	var enc encoding.Encoding
+	if best, err = chardet.NewTextDetector().DetectBest(b); err != nil {
+		return
+	} else if best.Confidence >= 25 {
+		if enc, err = ianaindex.IANA.Encoding(best.Charset); err != nil {
+			err = nil
+		}
+	}
+	if enc == nil {
+		enc = encoding.Nop
+	}
+	dec = enc.NewDecoder()
+	return
+}
+
 func openFileUTF8(path string) (r io.ReadCloser, err error) {
 	if r, err = os.Open(path); err != nil {
 		return
@@ -20,15 +37,12 @@ func openFileUTF8(path string) (r io.ReadCloser, err error) {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(r)
-	d := chardet.NewTextDetector()
-	var best *chardet.Result
-	var enc encoding.Encoding
-	if best, err = d.DetectBest(buf.Bytes()); err != nil {
-		return
-	} else if enc, err = ianaindex.IANA.Encoding(best.Charset); err != nil {
+	var dec *encoding.Decoder
+	if dec, err = decoderToUTF8For(buf.Bytes()); err != nil {
 		return
 	}
-	return ioutil.NopCloser(enc.NewDecoder().Reader(buf)), nil
+	r = ioutil.NopCloser(dec.Reader(buf))
+	return
 }
 
 func pathReplaceChars(s string) string {
