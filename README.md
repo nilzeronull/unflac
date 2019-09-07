@@ -17,9 +17,7 @@ go get github.com/ftrvxmtrx/unflac
 
 ## Dependencies
 
- * ffmpeg
- * metaflac (to split a FLAC image)
- * wavpack (to split a WavPack image)
+ * ffmpeg (ffprobe command is also used, part of ffmpeg package)
 
 Yeah, that's it.
 

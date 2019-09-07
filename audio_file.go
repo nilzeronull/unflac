@@ -24,16 +24,14 @@ type Tag struct {
 func NewAudio(path string) (af *AudioFile, err error) {
 	af = &AudioFile{Path: path, Format: strings.ToLower(filepath.Ext(path)[1:])}
 
-	var cmd *exec.Cmd
-	switch af.Format {
-	case "flac":
-		cmd = exec.Command("metaflac", "--show-sample-rate", af.Path)
-	case "wv":
-		cmd = exec.Command("wvunpack", "-f1", af.Path)
-	default:
-		return nil, fmt.Errorf("don't know how to handle %s", af.Format)
-	}
-
+	cmd := exec.Command(
+		"ffprobe",
+		"-loglevel", "error",
+		"-of", "compact=nk=1:p=0",
+		"-show_entries", "stream=sample_rate",
+		"-select_streams", "a",
+		af.Path,
+	)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stderr
