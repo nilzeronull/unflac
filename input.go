@@ -39,10 +39,11 @@ func NewInput(path string) (in *Input, err error) {
 	if cueReader, err = openFileUTF8(path); err != nil {
 		return
 	}
-	cueRaw := new(bytes.Buffer)
-	cueRaw.ReadFrom(cueReader)
+	cueRawBuf := new(bytes.Buffer)
+	cueRawBuf.ReadFrom(cueReader)
+	cueRaw := bytes.TrimPrefix(cueRawBuf.Bytes(), []byte{0xef, 0xbb, 0xbf}) // remove the nasty BOM
 
-	if sheet, err = cue.Parse(bytes.NewBuffer(cueRaw.Bytes()), 0); err != nil {
+	if sheet, err = cue.Parse(bytes.NewBuffer(cueRaw), 0); err != nil {
 		return
 	} else {
 		buf := new(bytes.Buffer)
@@ -59,7 +60,7 @@ func NewInput(path string) (in *Input, err error) {
 		}
 		var dec *encoding.Decoder
 		if dec, err = decoderToUTF8For(buf.Bytes()); err == nil {
-			if sheet, err = cue.Parse(dec.Reader(cueRaw), 0); err != nil {
+			if sheet, err = cue.Parse(dec.Reader(bytes.NewBuffer(cueRaw)), 0); err != nil {
 				return
 			}
 		}
