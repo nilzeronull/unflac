@@ -236,7 +236,7 @@ func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err 
 				continue
 			}
 
-			pool.Submit(func(t *Track) func() {
+			pool.Submit(func(a *AudioFile, t *Track) func() {
 				return func() {
 					trackPath := filepath.Join(dirPath, in.TrackFilename(t))
 					if err = a.Extract(t, trackPath); err != nil {
@@ -245,7 +245,7 @@ func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err 
 						fmt.Printf("%s\n", trackPath)
 					}
 				}
-			}(t))
+			}(a, t))
 		}
 	}
 
