@@ -74,6 +74,9 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 			Tag{"discnumber", diskNumber},
 			Tag{"totaldiscs", totalDisks},
 		)
+		if af.SampleRate > 192000 {
+			args = append(args, "-ar", "192000")
+		}
 
 	case "ogg":
 		tags = append(tags,
@@ -81,6 +84,9 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 			Tag{"discnumber", diskNumber},
 			Tag{"totaldiscs", totalDisks},
 		)
+		if af.SampleRate > 192000 {
+			args = append(args, "-ar", "192000")
+		}
 
 	case "mp3":
 		tags = append(tags,
