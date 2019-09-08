@@ -27,14 +27,16 @@ func indexTimeToSample(sampleRate int, t *cue.Time) int {
 }
 
 func (t *Track) Artist() string {
-	if t.Composer != "" {
+	switch {
+	case t.Composer != "":
 		return t.Composer
-	} else if t.SongWriter != "" {
+	case t.SongWriter != "":
 		return t.SongWriter
-	} else if t.Performer != "" {
+	case t.Performer != "":
 		return t.Performer
+	default:
+		return "Unknown Artist"
 	}
-	return "Unknown Artist"
 }
 
 func (t *Track) SetIndexes(sampleRate int, indexes []*cue.Index) error {

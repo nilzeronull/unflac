@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ftrvxmtrx/chardet"
+	"github.com/ftrvxmtrx/chub/cue"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/ianaindex"
 )
@@ -36,12 +37,38 @@ func openFileUTF8(path string) (r io.ReadCloser, err error) {
 	defer r.Close()
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(r)
+	if _, err = buf.ReadFrom(r); err != nil {
+		return
+	}
 	var dec *encoding.Decoder
 	if dec, err = decoderToUTF8For(buf.Bytes()); err != nil {
 		return
 	}
 	r = ioutil.NopCloser(dec.Reader(buf))
+	return
+}
+
+func cueSheetFromBytes(raw []byte) (sheet *cue.Sheet, err error) {
+	if sheet, err = cue.Parse(bytes.NewBuffer(raw), 0); err != nil {
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteString(sheet.Performer)
+	buf.WriteString(sheet.Songwriter)
+	buf.WriteString(sheet.Title)
+	for _, f := range sheet.Files {
+		if f.Type == cue.FileTypeWave {
+			for _, t := range f.Tracks {
+				buf.WriteString(t.Title)
+			}
+			buf.WriteString(f.Name)
+		}
+	}
+	var dec *encoding.Decoder
+	if dec, err = decoderToUTF8For(buf.Bytes()); err == nil {
+		sheet, err = cue.Parse(dec.Reader(bytes.NewBuffer(raw)), 0)
+	}
 	return
 }
 

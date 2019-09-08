@@ -39,11 +39,9 @@ func main() {
 			log.Fatalf("%s: %s", path, err)
 		} else if fi.IsDir() {
 			inputs = append(inputs, scanDir(path)...)
+		} else if in, err := NewInput(path); err != nil {
+			log.Fatalf("%s: %s", path, err)
 		} else {
-			var in *Input
-			if in, err = NewInput(path); err != nil {
-				log.Fatalf("%s: %s", path, err)
-			}
 			inputs = append(inputs, in)
 		}
 	}
@@ -72,7 +70,7 @@ func main() {
 }
 
 func (l *IntListFlag) String() string {
-	return fmt.Sprintf("#+v", *l)
+	return fmt.Sprintf("%+v", *l)
 }
 
 func (l *IntListFlag) Set(s string) error {

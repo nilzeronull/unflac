@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/ftrvxmtrx/chub/cue"
 	"github.com/gammazero/workerpool"
-	"golang.org/x/text/encoding"
 )
 
 type Input struct {
@@ -32,42 +32,23 @@ type Input struct {
 
 func NewInput(path string) (in *Input, err error) {
 	in = &Input{Path: path}
-	var cueReader io.ReadCloser
-	var sheet *cue.Sheet
-	var filesFromCue []*cue.File
 
+	var cueReader io.ReadCloser
 	if cueReader, err = openFileUTF8(path); err != nil {
 		return
 	}
-	cueRawBuf := new(bytes.Buffer)
-	cueRawBuf.ReadFrom(cueReader)
-	cueRaw := bytes.TrimPrefix(cueRawBuf.Bytes(), []byte{0xef, 0xbb, 0xbf}) // remove the nasty BOM
+	defer cueReader.Close()
 
-	if sheet, err = cue.Parse(bytes.NewBuffer(cueRaw), 0); err != nil {
+	cueRaw, _ := ioutil.ReadAll(cueReader)
+	cueRaw = bytes.TrimPrefix(cueRaw, []byte{0xef, 0xbb, 0xbf}) // remove the nasty BOM
+	var sheet *cue.Sheet
+	if sheet, err = cueSheetFromBytes(cueRaw); err != nil {
 		return
-	} else {
-		buf := new(bytes.Buffer)
-		buf.WriteString(sheet.Performer)
-		buf.WriteString(sheet.Songwriter)
-		buf.WriteString(sheet.Title)
-		for _, f := range sheet.Files {
-			if f.Type == cue.FileTypeWave {
-				for _, t := range f.Tracks {
-					buf.WriteString(t.Title)
-				}
-				buf.WriteString(f.Name)
-			}
-		}
-		var dec *encoding.Decoder
-		if dec, err = decoderToUTF8For(buf.Bytes()); err == nil {
-			if sheet, err = cue.Parse(dec.Reader(bytes.NewBuffer(cueRaw)), 0); err != nil {
-				return
-			}
-		}
 	}
 
 	dirPath := filepath.Dir(path)
 	var audio *AudioFile
+	var filesFromCue []*cue.File
 	for _, f := range sheet.Files {
 		if f.Type != cue.FileTypeWave {
 			continue
@@ -90,22 +71,24 @@ func NewInput(path string) (in *Input, err error) {
 	for _, c := range sheet.Comments {
 		if words := strings.SplitAfterN(c, " ", 2); len(words) < 2 {
 			continue
-		} else if strings.HasPrefix(c, "DATE") {
-			in.Date = words[1]
-		} else if strings.HasPrefix(c, "GENRE") {
-			in.Genre = words[1]
-		} else if strings.HasPrefix(c, "COMPOSER") {
-			in.Composer = words[1]
-		} else if len(in.Audio) == 1 {
-			// FIXME no idea what to do with several discnumber comments in a cue sheet
-			if strings.HasPrefix(c, "DISCNUMBER") {
-				diskNumber, err = strconv.Atoi(words[1])
-			} else if strings.HasPrefix(c, "TOTALDISCS") {
+		} else {
+			switch words[0] {
+			case "DATE":
+				in.Date = words[1]
+			case "GENRE":
+				in.Genre = words[1]
+			case "COMPOSER":
+				in.Composer = words[1]
+			case "DISCNUMBER":
+				if len(in.Audio) == 1 {
+					// FIXME no idea what to do with several discnumber comments in a cue sheet
+					if diskNumber, err = strconv.Atoi(words[1]); err != nil {
+						return
+					}
+				}
+			case "TOTALDISCS":
 				in.TotalDisks, err = strconv.Atoi(words[1])
 			}
-		}
-		if err != nil {
-			return
 		}
 	}
 
@@ -164,11 +147,12 @@ func NewInput(path string) (in *Input, err error) {
 }
 
 func (in *Input) Artist() string {
-	if in.Composer != "" {
+	switch {
+	case in.Composer != "":
 		return in.Composer
-	} else if in.SongWriter != "" {
+	case in.SongWriter != "":
 		return in.SongWriter
-	} else if in.Performer != "" {
+	case in.Performer != "":
 		return in.Performer
 	}
 
@@ -177,9 +161,8 @@ func (in *Input) Artist() string {
 		for _, t := range a.Tracks[1:] {
 			if t.Artist() != artist && artist != "" {
 				return "Various Artists"
-			} else {
-				artist = t.Artist()
 			}
+			artist = t.Artist()
 		}
 	}
 
