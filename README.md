@@ -21,6 +21,12 @@ go get github.com/ftrvxmtrx/unflac
 
 Yeah, that's it.
 
+## Some useful ffmpeg options
+
+ * Set a specific sample rate for output files: `unflac -arg-ffmpeg -ar -arg-ffmpeg 44100 ...`
+
+`man ffmpeg` contains a lot more.
+
 ## TODO
 
  * an option to format the output path in a specific way
