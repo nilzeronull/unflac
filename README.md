@@ -1,6 +1,6 @@
 # unflac
 
-A command line tool for fast frame accurate FLAC image + cue sheet splitting.
+A command line tool for fast frame accurate audio image + cue sheet splitting.
 
 This project is started mostly out of frustration over supporting
 [split2flac](https://github.com/ftrvxmtrx/split2flac) with all the

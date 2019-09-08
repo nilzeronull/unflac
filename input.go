@@ -69,7 +69,7 @@ func NewInput(path string) (in *Input, err error) {
 
 	var diskNumber int
 	for _, c := range sheet.Comments {
-		if words := strings.SplitAfterN(c, " ", 2); len(words) < 2 {
+		if words := strings.SplitN(c, " ", 2); len(words) < 2 {
 			continue
 		} else {
 			switch words[0] {
