@@ -214,6 +214,10 @@ func (in *Input) Dump() {
 		fmt.Printf("%s\n", a.Path)
 		dirPath := filepath.Join(*outputDir, in.OutputPath())
 		for _, t := range a.Tracks {
+			if len(trackArgs) > 0 && !trackArgs.Has(t.Number) {
+				continue
+			}
+
 			trackPath := filepath.Join(dirPath, in.TrackFilename(t))
 			fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.StartAtSample, t.EndAtSample)
 		}
@@ -228,6 +232,10 @@ func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err 
 
 	for _, a := range in.Audio {
 		for _, t := range a.Tracks {
+			if len(trackArgs) > 0 && !trackArgs.Has(t.Number) {
+				continue
+			}
+
 			pool.Submit(func(t *Track) func() {
 				return func() {
 					trackPath := filepath.Join(dirPath, in.TrackFilename(t))

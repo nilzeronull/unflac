@@ -3,16 +3,19 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/gammazero/workerpool"
 )
 
-type ListFlag []string
+type IntListFlag []int
+type StringListFlag []string
 
 var (
 	outputDir = flag.String("o", ".", "Output directory")
@@ -21,16 +24,13 @@ var (
 	jsonDump  = flag.Bool("j", false, "Dump all inputs as json")
 	format    = flag.String("f", "flac", "Output format")
 
-	ffmpegArgs ListFlag
+	trackArgs  IntListFlag
+	ffmpegArgs StringListFlag
 )
-
-type FailedPath struct {
-	Path  string
-	Error error
-}
 
 func main() {
 	flag.Var(&ffmpegArgs, "arg-ffmpeg", "Add an argument to ffmpeg")
+	flag.Var(&trackArgs, "t", `Extract specific track(s). Example: "-t 1 -t 2"`)
 	flag.Parse()
 
 	var inputs []*Input
@@ -71,11 +71,33 @@ func main() {
 	}
 }
 
-func (l *ListFlag) String() string {
+func (l *IntListFlag) String() string {
+	return fmt.Sprintf("#+v", *l)
+}
+
+func (l *IntListFlag) Set(s string) error {
+	if i, err := strconv.Atoi(s); err != nil {
+		return err
+	} else {
+		*l = append(*l, i)
+	}
+	return nil
+}
+
+func (l *IntListFlag) Has(i int) bool {
+	for _, x := range *l {
+		if x == i {
+			return true
+		}
+	}
+	return false
+}
+
+func (l *StringListFlag) String() string {
 	return strings.Join(*l, " ")
 }
 
-func (l *ListFlag) Set(s string) error {
+func (l *StringListFlag) Set(s string) error {
 	*l = append(*l, s)
 	return nil
 }
