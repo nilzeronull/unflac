@@ -1,7 +1,7 @@
 github.com/ftrvxmtrx/chardet v0.0.0-20170222172924-16496b196583 h1:9DjV8Qy5be6hwnkThnEB+OdBIY+e8Zqkpd7+D3/eLZY=
 github.com/ftrvxmtrx/chardet v0.0.0-20170222172924-16496b196583/go.mod h1:0PlEMLGTqHG/c+6q+fdxpBj8dfX3bnrD2oAXUk/LQKQ=
-github.com/ftrvxmtrx/chub v0.0.0-20190907143400-33b3ea45ca46 h1:0MKWmN29eAbria7Idzz7qjOA+xnGipJoQIOnEhiFp44=
-github.com/ftrvxmtrx/chub v0.0.0-20190907143400-33b3ea45ca46/go.mod h1:M/aj9MdnxftfbN4VvT2BxO0YNeVRsa2vCMELq6lD6pw=
+github.com/ftrvxmtrx/chub v0.0.0-20190908123659-ae49e2268479 h1:HQDswd8plTWrKJ0Y/Z/IJsj0uyYCmeWv8O3qzUI7MKo=
+github.com/ftrvxmtrx/chub v0.0.0-20190908123659-ae49e2268479/go.mod h1:M/aj9MdnxftfbN4VvT2BxO0YNeVRsa2vCMELq6lD6pw=
 github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622 h1:lxbhOGZ9pU3Kf8P6lFluUcE82yVZn2EqEf4+mWRNPV0=
 github.com/gammazero/deque v0.0.0-20190521012701-46e4ffb7a622/go.mod h1:D90+MBHVc9Sk1lJAbEVgws0eYEurY4mv2TDso3Nxh3w=
 github.com/gammazero/workerpool v0.0.0-20190608213748-0ed5e40ec55e h1:fqgNEGLc7p2Rz4xlDHp9WNw/pqqR3c2cLdIC4zASBzU=
