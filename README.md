@@ -33,7 +33,6 @@ Yeah, that's it.
  * copying cue, log, images over to the destination
  * clean up on errors
  * replay gain
- * support more input formats (wave, mac)
  * support multiple artist/performer/composer?
 
 ## DONE
@@ -42,7 +41,7 @@ Yeah, that's it.
  * tagging
  * split to other formats (ogg/vorbis, mp3)
  * parallel extraction
- * support more input formats (wavpack)
+ * support more input formats (wavpack, wave, mac)
  * get the artist/performer/composer right
  * multi-disk cue sheets support
  * detect cue sheet encoding and convert to utf8
