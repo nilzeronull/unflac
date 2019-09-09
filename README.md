@@ -21,15 +21,44 @@ go get github.com/ftrvxmtrx/unflac
 
 Yeah, that's it.
 
-## Some useful ffmpeg options
+## Some useful options
 
- * Set a specific sample rate for output files: `unflac -arg-ffmpeg -ar -arg-ffmpeg 44100 ...`
+ * Set a specific sample rate for output files:
 
-`man ffmpeg` contains a lot more.
+   `unflac -arg-ffmpeg -ar -arg-ffmpeg 44100 ...`
+
+   `man ffmpeg` contains a lot more.
+
+## Output file naming
+
+To set a custom output file naming use `-n` option (run `unflac -h` to see the default value).
+The format of the argument is described [here](https://golang.org/pkg/text/template).
+
+```
+Elem - a function that replaces invalid file path characters with ones that look (almost) the same but valid
+
+.Input.TrackNumberFmt - track number printf format (it's either "%02d" or "%03d" depending on the number of tracks)
+.Input.Composer       - composer (can be empty)
+.Input.Performer      - performer (can be empty)
+.Input.SongWriter     - song writer (can be empty)
+.Input.Title          - title, that's album name in general (can be empty)
+.Input.Genre          - genre
+.Input.Date           - date
+.Input.TotalTracks    - total number of tracks
+.Input.TotalDisks     - total number of disks, 0 if there is only one disk
+.Input.Artist         - a special handy field that is selected based on Composer/Performer/SongWriter; is never empty
+
+.Track.Number         - track number
+.Track.DiskNumber     - disk number, 0 if there is only one disk
+.Track.Composer       - composer (can be empty)
+.Track.Performer      - performer (can be empty)
+.Track.SongWriter     - song writer (can be empty)
+.Track.Title          - track title
+.Track.Artist         - a special handy field that is selected based on Composer/Performer/SongWriter; is never empty
+```
 
 ## TODO
 
- * an option to format the output path in a specific way
  * copying cue, log, images over to the destination
  * clean up on errors
  * replay gain
@@ -45,6 +74,7 @@ Yeah, that's it.
  * get the artist/performer/composer right
  * multi-disk cue sheets support
  * detect cue sheet encoding and convert to utf8
+ * an option to format the output path in a specific way
 
 ## NOTES
 

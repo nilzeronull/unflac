@@ -169,67 +169,35 @@ func (in *Input) Artist() string {
 	return "Unknown Artist"
 }
 
-func (in *Input) OutputPath() (path string) {
-	var album string
-	if in.Date != "" {
-		album = in.Date + " - "
-	}
-	if in.Title != "" {
-		album += in.Title
-	} else {
-		album += "Unknown Album" // FIXME this name sucks
-	}
-
-	// FIXME make sure the final path doesn't exist?
-	return filepath.Join(pathReplaceChars(in.Artist()), pathReplaceChars(album))
-}
-
-func (in *Input) TrackFilename(t *Track) (path string) {
-	path = fmt.Sprintf(in.TrackNumberFmt, t.Number)
-	if t.Title != "" {
-		path += " - " + t.Title
-	}
-	path = pathReplaceChars(path + "." + *format)
-	return
-}
-
-func (in *Input) Dump() {
-	for _, a := range in.Audio {
-		fmt.Printf("%s\n", a.Path)
-		dirPath := filepath.Join(*outputDir, in.OutputPath())
-		for _, t := range a.Tracks {
-			if len(trackArgs) > 0 && !trackArgs.Has(t.Number) {
-				continue
-			}
-
-			trackPath := filepath.Join(dirPath, in.TrackFilename(t))
-			fmt.Printf("%s\n\tfirst=%d last=%d\n", trackPath, t.StartAtSample, t.EndAtSample)
-		}
-	}
-}
-
 func (in *Input) Split(pool *workerpool.WorkerPool, firstErr chan<- error) (err error) {
-	dirPath := filepath.Join(*outputDir, in.OutputPath())
-	if err = os.MkdirAll(dirPath, 0755); err != nil {
-		return
-	}
-
 	for _, a := range in.Audio {
 		for _, t := range a.Tracks {
 			if len(trackArgs) > 0 && !trackArgs.Has(t.Number) {
 				continue
 			}
 
-			pool.Submit(func(a *AudioFile, t *Track) func() {
+			trackPathBuilder := new(strings.Builder)
+			err = nameTmpl.Execute(trackPathBuilder, &struct {
+				Input *Input
+				Track *Track
+			}{in, t})
+			if err != nil {
+				return
+			}
+			trackPath := filepath.Join(*outputDir, trackPathBuilder.String()+"."+*format)
+			if err = os.MkdirAll(filepath.Dir(trackPath), 0755); err != nil {
+				return
+			}
+
+			pool.Submit(func(a *AudioFile, t *Track, trackPath string) func() {
 				return func() {
-					trackPath := filepath.Join(dirPath, in.TrackFilename(t))
 					if err = a.Extract(t, trackPath); err != nil {
 						firstErr <- fmt.Errorf("%s: %s", trackPath, err)
 					} else if !*quiet {
 						fmt.Printf("%s\n", trackPath)
 					}
 				}
-			}(a, t))
+			}(a, t, trackPath))
 		}
 	}
 

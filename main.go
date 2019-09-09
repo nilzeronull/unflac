@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/gammazero/workerpool"
 )
@@ -26,12 +27,24 @@ var (
 
 	trackArgs  IntListFlag
 	ffmpegArgs StringListFlag
+	nameTmpl   *template.Template
 )
 
 func main() {
 	flag.Var(&ffmpegArgs, "arg-ffmpeg", "Add an argument to ffmpeg")
 	flag.Var(&trackArgs, "t", `Extract specific track(s). Example: "-t 1 -t 2"`)
+	nameTmplV := flag.String(
+		"n",
+		`{{.Input.Artist | Elem -}} / {{- with .Input.Date}}{{.}} - {{end}}{{with .Input.Title}}{{. | Elem}}{{else}}Unknown Album{{end -}} / {{- printf .Input.TrackNumberFmt .Track.Number}} - {{.Track.Title | Elem}}`,
+		"File naming template",
+	)
 	flag.Parse()
+
+	var err error
+	nameTmpl = template.New("-n").Funcs(template.FuncMap{"Elem": pathReplaceChars})
+	if nameTmpl, err = nameTmpl.Parse(*nameTmplV); err != nil {
+		log.Fatal(err)
+	}
 
 	var inputs []*Input
 	for _, path := range flag.Args() {
