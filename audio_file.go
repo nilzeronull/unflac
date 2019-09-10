@@ -49,7 +49,7 @@ func (af *AudioFile) Extract(t *Track, filename string) (err error) {
 	args := []string{"-loglevel", "error", "-y", "-i", af.Path, "-map_metadata", "-1"}
 	tags := []Tag{
 		{"composer", t.Composer},
-		{"artist", t.SongWriter},
+		{"artist", t.Artist()},
 		{"performer", t.Performer},
 		{"album", t.Album},
 		{"title", t.Title},
