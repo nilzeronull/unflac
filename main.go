@@ -56,6 +56,8 @@ func main() {
 			log.Fatalf("%s: %s", path, err)
 		} else if fi.IsDir() {
 			inputs = append(inputs, scanDir(path)...)
+		} else if strings.ToLower(filepath.Ext(path)) != ".cue" {
+			log.Fatalf("%s: only dirs and CUE sheets are supported as inputs", path)
 		} else if in, err := NewInput(path); err != nil {
 			log.Fatalf("%s: %s", path, err)
 		} else {
@@ -124,10 +126,11 @@ func scanDir(path string) (ins []*Input) {
 	if f, err = os.Open(path); err == nil {
 		if fis, err = f.Readdir(0); err == nil {
 			for _, fi := range fis {
-				fiPath := filepath.Join(path, fi.Name())
+				name := fi.Name()
+				fiPath := filepath.Join(path, name)
 				if fi.IsDir() {
 					ins = append(ins, scanDir(fiPath)...)
-				} else if strings.HasSuffix(strings.ToLower(fi.Name()), ".cue") {
+				} else if strings.ToLower(filepath.Ext(name)) == ".cue" {
 					var in *Input
 					if in, err = NewInput(fiPath); err != nil {
 						log.Fatalf("%s: %s", fiPath, err)
