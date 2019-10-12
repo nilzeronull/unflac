@@ -90,13 +90,12 @@ func (l *IntListFlag) String() string {
 	return fmt.Sprintf("%+v", *l)
 }
 
-func (l *IntListFlag) Set(s string) error {
-	if i, err := strconv.Atoi(s); err != nil {
-		return err
-	} else {
+func (l *IntListFlag) Set(s string) (err error) {
+	var i int
+	if i, err = strconv.Atoi(s); err == nil {
 		*l = append(*l, i)
 	}
-	return nil
+	return
 }
 
 func (l *IntListFlag) Has(i int) bool {
