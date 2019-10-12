@@ -46,8 +46,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	args := flag.Args()
+	if len(args) == 0 {
+		args = []string{"."}
+	}
 	var inputs []*Input
-	for _, path := range flag.Args() {
+	for _, path := range args {
 		if fi, err := os.Stat(path); err != nil {
 			log.Fatalf("%s: %s", path, err)
 		} else if fi.IsDir() {
