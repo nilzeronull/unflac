@@ -23,7 +23,7 @@ var (
 	quiet     = flag.Bool("q", false, "Only print errors")
 	dryRun    = flag.Bool("d", false, "Dry run")
 	jsonDump  = flag.Bool("j", false, "Dump all inputs as json")
-	format    = flag.String("f", "flac", "Output format")
+	format    = flag.String("f", "flac", `Output format. Example: "-f ogg". Any format that ffmpeg supports can be used`)
 
 	trackArgs  IntListFlag
 	ffmpegArgs StringListFlag
@@ -31,14 +31,23 @@ var (
 )
 
 func main() {
-	flag.Var(&ffmpegArgs, "arg-ffmpeg", "Add an argument to ffmpeg")
+	flag.Var(&ffmpegArgs, "arg-ffmpeg", `Add an argument to ffmpeg. Example: "-arg-ffmpeg -qscale:a --arg-ffmpeg 2"`)
 	flag.Var(&trackArgs, "t", `Extract specific track(s). Example: "-t 1 -t 2"`)
 	nameTmplV := flag.String(
 		"n",
 		`{{.Input.Artist | Elem -}} / {{- with .Input.Date}}{{.}} - {{end}}{{with .Input.Title}}{{. | Elem}}{{else}}Unknown Album{{end -}} / {{- printf .Input.TrackNumberFmt .Track.Number}} - {{.Track.Title | Elem}}`,
 		"File naming template",
 	)
+	help := flag.Bool("h", false, "Show command usage")
 	flag.Parse()
+
+	if *help {
+		fmt.Fprintf(os.Stderr, "Usage: unflac [OPTION] ... [INPUT] ...\n\n")
+		fmt.Fprintf(os.Stderr, "INPUT can be either a directory or a CUE sheet file.\n")
+		fmt.Fprintf(os.Stderr, "If no inputs where specified, a current directory is used.\n\n")
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
 
 	var err error
 	nameTmpl = template.New("-n").Funcs(template.FuncMap{"Elem": pathReplaceChars})
