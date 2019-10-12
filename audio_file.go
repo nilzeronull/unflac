@@ -38,7 +38,7 @@ func NewAudio(path string) (af *AudioFile, err error) {
 	if err = cmd.Run(); err == nil {
 		af.SampleRate, err = strconv.Atoi(strings.TrimSpace(out.String()))
 	} else {
-		err = fmt.Errorf("failed to get sample rate")
+		err = fmt.Errorf("failed to get sample rate: %s", err)
 	}
 
 	return
