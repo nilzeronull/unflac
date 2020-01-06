@@ -6,12 +6,12 @@ This project is started mostly out of frustration over supporting
 [split2flac](https://github.com/ftrvxmtrx/split2flac) with all the
 external dependencies and their quirks.
 
-## Installation and running
+## Installation/upgrade and running
 
 You need [Go](https://golang.org/) installed.
 
 ```
-go get github.com/ftrvxmtrx/unflac
+go get -u github.com/ftrvxmtrx/unflac
 ~/go/bin/unflac -h
 ```
 
